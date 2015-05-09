@@ -40,7 +40,7 @@ public class VisitedDaoImpl implements VisitedDao {
 		url = prop.getProperty("url", "");
 		username = prop.getProperty("username", "");
 		password = prop.getProperty("password", "");
-		log.log(Level.INFO, "初始化Mysql连接，url={0}，username={1}，password={2}", new String[] { url, username, password });
+		log.log(Level.INFO, "初始化Mysql连接，url={0}，username={1}，password=******", new String[] { url, username });
 		if (url.equals("") || username.equals("") || password.equals("")) {
 			throw new ConfigException("配置文件不完整！");
 		}
@@ -59,6 +59,7 @@ public class VisitedDaoImpl implements VisitedDao {
 
 	@Override
 	public boolean isVisited(String url) throws Exception {
+		log.log(Level.FINE, "crawler_visited表包含{0}", url);
 		PreparedStatement ps = conn.prepareStatement("select 1 from crawler_visited where url_code=? limit 1");
 		ps.setString(1, MD5Util.gen32bitMD5(url));
 		ResultSet rs = ps.executeQuery();
@@ -71,6 +72,7 @@ public class VisitedDaoImpl implements VisitedDao {
 
 	@Override
 	public void add(String url, String newspaper) throws Exception {
+		log.log(Level.FINE, "增加记录到crawler_visited: url={0},newspaper={1}", new String[] { url, newspaper });
 		PreparedStatement ps = conn.prepareStatement("insert into crawler_visited (url_code,url,newspaper,timestamp) values (?,?,?,?)");
 		ps.setString(1, MD5Util.gen32bitMD5(url));
 		ps.setString(2, url);
@@ -82,7 +84,7 @@ public class VisitedDaoImpl implements VisitedDao {
 
 	@Override
 	public void clear() throws Exception {
-		log.log(Level.INFO, "清空表crawler_visited");
+		log.log(Level.FINE, "清空表crawler_visited");
 		PreparedStatement ps = conn.prepareStatement("truncate table crawler_visited;");
 		ps.execute();
 		ps.close();
