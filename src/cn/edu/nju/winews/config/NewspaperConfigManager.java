@@ -17,6 +17,8 @@ public class NewspaperConfigManager {
 	private static final String PATH = "conf/newspaper.xml";
 	private static final String URL_CONFIG_PREFIX = "url_";
 	private static final String SELECTOR_CONFIG_PREFIX = "selector_";
+	
+	private static NewspaperConfigManager instance;
 
 	private String[] newspaperNameArray;
 	private Map<String, NewsPaperConfig> confMap;
@@ -24,8 +26,15 @@ public class NewspaperConfigManager {
 	private XPath xpath;
 	private Document doc;
 
-	public NewspaperConfigManager() throws Exception {
+	private NewspaperConfigManager() throws Exception {
 		reload();
+	}
+	
+	public static NewspaperConfigManager getInstance() throws Exception {
+		if(instance == null) {
+			instance = new NewspaperConfigManager();
+		}
+		return instance;
 	}
 
 	public void reload() throws Exception {
@@ -117,7 +126,7 @@ public class NewspaperConfigManager {
 	}
 
 	public static enum CommonConfig {
-		name, domain, province, handler
+		name, domain, province, handler, parser
 	}
 
 	public static enum UrlConfig {
