@@ -6,7 +6,7 @@
 		<province>江苏</province>
 		<handler>cn.edu.nju.winews.handler.impl.DefaultHandler</handler>
 		<parser>cn.edu.nju.winews.parser.impl.DefaultParser</parser>
-		<url>
+		<url start="2014-01-01">
 			<pattern>
 				<node>http://xh.xhby.net/mp2/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/node_[0-9]*\.htm</node>
 				<content>http://xh.xhby.net/mp2/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/content_[0-9]*\.htm</content>
@@ -33,15 +33,42 @@
 		<province>浙江</province>
 		<handler>cn.edu.nju.winews.handler.impl.DefaultHandler</handler>
 		<parser>cn.edu.nju.winews.parser.impl.DefaultParser</parser>
-		<url>
+		<url start="2014-01-01">
 			<pattern>
-				<node>http://zjrb.zjol.com.cn/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/node_[0-9]*\\.htm</node>
-				<content>http://zjrb.zjol.com.cn/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/content_[0-9]*\\.htm</content>
+				<node>http://zjrb.zjol.com.cn/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/node_[0-9]*\.htm</node>
+				<content>http://zjrb.zjol.com.cn/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/content_[0-9]*\.htm</content>
 				<date>[0-9]{4}-[0-9]{2}/[0-9]{2}</date>
 			</pattern>
 			<format>
 				<node>http://zjrb.zjol.com.cn/html/{{DATE}}/zjrbindex.htm</node>
 				<date>yyyy-MM/dd</date>
+			</format>
+		</url>
+		<selector>
+			<preTitle>.main-article-pretitle</preTitle>
+			<title>.main-article-title</title>
+			<subTitle>.main-article-subtitle</subTitle>
+			<author>.main-article-author</author>
+			<layout>.main-ed-pageifm>span</layout>
+			<content>.main-article-content #ozoom p</content>
+			<picture>.main_ar_pic_text table</picture>
+		</selector>
+	</newspaper>
+	<newspaper>
+		<name>安徽日报</name>
+		<domain>epaper.anhuinews.com</domain>
+		<province>安徽</province>
+		<handler>cn.edu.nju.winews.handler.impl.DefaultHandler</handler>
+		<parser>cn.edu.nju.winews.parser.impl.DefaultParser</parser>
+		<url start="2014-01-01">
+			<pattern>
+				<node>http://epaper.anhuinews.com/html/ahrb/[0-9]{4}[0-9]{2}[0-9]{2}/index(_[0-9]*)?\.shtml</node>
+				<content>http://epaper.anhuinews.com/html/ahrb/[0-9]{4}[0-9]{2}[0-9]{2}/article_[0-9]*\.shtml</content>
+				<date>[0-9]{4}[0-9]{2}[0-9]{2}</date>
+			</pattern>
+			<format>
+				<node>http://epaper.anhuinews.com/html/ahrb/{{DATE}}/index.shtml</node>
+				<date>yyyyMMdd</date>
 			</format>
 		</url>
 		<selector>

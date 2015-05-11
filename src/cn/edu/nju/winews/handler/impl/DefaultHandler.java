@@ -29,8 +29,7 @@ import cn.edu.nju.winews.po.BriefNewsPO;
 import cn.edu.nju.winews.po.NewsPO;
 
 public class DefaultHandler implements IHandler {
-	private static final Logger log = Logger.getLogger(DefaultHandler.class
-			.getName());
+	private static final Logger log = Logger.getLogger(DefaultHandler.class.getName());
 	private static final int timeoutMillis = 5000;
 	private static final int maxDepth = 5;
 
@@ -54,6 +53,7 @@ public class DefaultHandler implements IHandler {
 		this.newspaperName = newspaperName;
 		vistiedDao = new VisitedDaoImpl();
 		newsDao = new NewsDaoImpl();
+		vistiedDao.clear();
 	}
 
 	public void setStartUrl(URL startUrl) {
@@ -70,29 +70,33 @@ public class DefaultHandler implements IHandler {
 
 	@Override
 	public void handle() throws Exception {
+		// 检查起始URL是否为空
+		if (startUrl == null) {
+			log.log(Level.INFO, "Handler {0}: URL is null!");
+			return;
+		}
+		// 检查起始URL是否被爬取
+		if (vistiedDao.isVisited(startUrl.toString())) {
+			log.log(Level.INFO, "Handler {0}: URL {1} has been visited!");
+			return;
+		}
+		// 初始化配置
 		initConfig();
+		// 遍历URL
 		getLinks(startUrl, 0);
 	}
 
 	private void initConfig() throws Exception {
 		NewspaperConfigManager ncm = NewspaperConfigManager.getInstance();
-		domain = ncm.getCommonConfig(newspaperName,
-				NewspaperConfigManager.CommonConfig.domain);
-		province = ncm.getCommonConfig(newspaperName,
-				NewspaperConfigManager.CommonConfig.province);
-		pattern_node = ncm.getUrlConfig(newspaperName,
-				NewspaperConfigManager.UrlConfig.pattern_node);
-		pattern_content = ncm.getUrlConfig(newspaperName,
-				NewspaperConfigManager.UrlConfig.pattern_content);
-		pattern_date = ncm.getUrlConfig(newspaperName,
-				NewspaperConfigManager.UrlConfig.pattern_date);
-		format_date = ncm.getUrlConfig(newspaperName,
-				NewspaperConfigManager.UrlConfig.format_date);
+		domain = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.domain);
+		province = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.province);
+		pattern_node = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.pattern_node);
+		pattern_content = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.pattern_content);
+		pattern_date = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.pattern_date);
+		format_date = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.format_date);
 
-		String parserName = ncm.getCommonConfig(newspaperName,
-				NewspaperConfigManager.CommonConfig.parser);
-		Constructor<?> constructor = Class.forName(parserName).getConstructor(
-				String.class);
+		String parserName = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.parser);
+		Constructor<?> constructor = Class.forName(parserName).getConstructor(String.class);
 		parser = (IParser) constructor.newInstance(newspaperName);
 
 		curDate = getDateFromLink(startUrl.toString());
@@ -107,8 +111,7 @@ public class DefaultHandler implements IHandler {
 			Date date = df.parse(dateStr);
 			return date;
 		} else {
-			throw new ParseException("Can't find pattern \"" + pattern_date
-					+ "\" in url: " + url, 0);
+			throw new ParseException("Can't find pattern \"" + pattern_date + "\" in url: " + url, 0);
 		}
 	}
 
@@ -118,14 +121,8 @@ public class DefaultHandler implements IHandler {
 		}
 		Document doc;
 		try {
-			doc = Jsoup
-					.connect(url.toString())
-					.ignoreContentType(true)
-					.ignoreHttpErrors(true)
-					.timeout(timeoutMillis)
-					.userAgent(
-							"Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0")
-					.get();
+			doc = Jsoup.connect(url.toString()).ignoreContentType(true).ignoreHttpErrors(true).timeout(timeoutMillis)
+					.userAgent("Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0").get();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -145,8 +142,7 @@ public class DefaultHandler implements IHandler {
 					vistiedDao.add(link.toString(), newspaperName); // 链接加入链接列表
 					// 如果是节点链接
 					if (Pattern.matches(pattern_node, link.toString())) {
-						log.log(Level.INFO, "Newspaper: {0}, Node URL: {1}",
-								new String[] { newspaperName, link.toString() });
+						log.log(Level.INFO, "Newspaper: {0}, Node URL: {1}", new String[] { newspaperName, link.toString() });
 						try {
 							getLinks(link, depth++);
 						} catch (Exception e) {
@@ -154,10 +150,8 @@ public class DefaultHandler implements IHandler {
 							continue;
 						}
 						// 如果是正文链接
-					} else if (Pattern
-							.matches(pattern_content, link.toString())) {
-						log.log(Level.INFO, "Newspaper: {0}, Content URL: {1}",
-								new String[] { newspaperName, link.toString() });
+					} else if (Pattern.matches(pattern_content, link.toString())) {
+						log.log(Level.INFO, "Newspaper: {0}, Content URL: {1}", new String[] { newspaperName, link.toString() });
 						NewsPO news = null;
 						try {
 							news = (NewsPO) parser.parse(link);
@@ -165,8 +159,7 @@ public class DefaultHandler implements IHandler {
 							news.setDomain(domain);
 							news.setProvince(province);
 							if (news.getLayout().equals("")) {
-								news.setLayout(doc.select("#banzhibar>div")
-										.first().text().trim());
+								news.setLayout(doc.select("#banzhibar>div").first().text().trim());
 							}
 						} catch (Exception e) {
 							e.printStackTrace();
@@ -202,8 +195,7 @@ public class DefaultHandler implements IHandler {
 
 			@Override
 			public String add(NewsPO news) throws Exception {
-				BufferedWriter bfr = new BufferedWriter(new FileWriter("tmp/"
-						+ news.getTitle() + ".txt"));
+				BufferedWriter bfr = new BufferedWriter(new FileWriter("tmp/" + news.getTitle() + ".txt"));
 				bfr.write(news.toString());
 				bfr.close();
 				return null;
@@ -226,8 +218,7 @@ public class DefaultHandler implements IHandler {
 				set.add(url);
 			}
 		});
-		h.setStartUrl(new URL(
-				"http://xh.xhby.net/mp2/html/2015-05/11/node_2.htm"));
+		h.setStartUrl(new URL("http://xh.xhby.net/mp2/html/2015-05/11/node_2.htm"));
 		h.handle();
 	}
 

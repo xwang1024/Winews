@@ -86,6 +86,11 @@ public class NewspaperConfigManager {
 	public String[] getNewspaperList() {
 		return newspaperNameArray;
 	}
+	
+	public String getNewspaperName(String domain) {
+		
+		return null;
+	}
 
 	public String getCommonConfig(String paperName, CommonConfig configName) {
 		NewsPaperConfig conf = confMap.get(paperName);

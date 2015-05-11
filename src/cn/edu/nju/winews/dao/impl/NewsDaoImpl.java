@@ -4,15 +4,25 @@ import cn.edu.nju.winews.dao.NewsDao;
 import cn.edu.nju.winews.po.BriefNewsPO;
 import cn.edu.nju.winews.po.NewsPO;
 
-public class NewsDaoImpl implements NewsDao {
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.MongoClient;
 
+public class NewsDaoImpl implements NewsDao {
+	 private MongoClient mongo;
+	 private DB db;
+	 
 	@Override
-	public boolean exists(String id) throws Exception {
+	public boolean exists(String url) throws Exception {
+//		DBCollection coll = db.getCollection(news.getSource());
+		// BasicDBObject dbObj = new BasicDBObject("url", news.getUrl().toString());
+		// return coll.findOne(dbObj) != null;
 		return false;
 	}
 
 	@Override
 	public String add(NewsPO news) throws Exception {
+		System.out.println(news);
 		return null;
 	}
 
