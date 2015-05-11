@@ -4,13 +4,12 @@
 		<name>新华日报</name>
 		<domain>xh.xhby.net</domain>
 		<province>江苏</province>
-		<handler></handler>
-		<parser></parser>
-		<object></<object>
+		<handler>cn.edu.nju.winews.handler.impl.DefaultHandler</handler>
+		<parser>cn.edu.nju.winews.parser.impl.DefaultParser</parser>
 		<url>
 			<pattern>
-				<node>http://xh.xhby.net/mp2/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/node_[0-9]*\\.htm</node>
-				<content>http://xh.xhby.net/mp2/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/content_[0-9]*\\.htm</content>
+				<node>http://xh.xhby.net/mp2/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/node_[0-9]*\.htm</node>
+				<content>http://xh.xhby.net/mp2/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/content_[0-9]*\.htm</content>
 				<date>[0-9]{4}-[0-9]{2}/[0-9]{2}</date>
 			</pattern>
 			<format>
@@ -32,9 +31,8 @@
 		<name>浙江日报</name>
 		<domain>zjrb.zjol.com.cn</domain>
 		<province>浙江</province>
-		<handler></handler>
-		<parser></parser>
-		<object></<object>
+		<handler>cn.edu.nju.winews.handler.impl.DefaultHandler</handler>
+		<parser>cn.edu.nju.winews.parser.impl.DefaultParser</parser>
 		<url>
 			<pattern>
 				<node>http://zjrb.zjol.com.cn/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/node_[0-9]*\\.htm</node>

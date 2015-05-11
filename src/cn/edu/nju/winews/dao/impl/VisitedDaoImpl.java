@@ -1,6 +1,5 @@
 package cn.edu.nju.winews.dao.impl;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,11 +12,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import cn.edu.nju.winews.dao.VisitedDao;
+import cn.edu.nju.winews.dao.impl.exception.ConfigException;
 import cn.edu.nju.winews.util.MD5Util;
-import cn.nju.edu.winews.crawler.handler.exception.ConfigException;
 
 public class VisitedDaoImpl implements VisitedDao {
-	private static final Logger log = Logger.getLogger(VisitedDaoImpl.class.getName());
+	private static final Logger log = Logger.getLogger(VisitedDaoImpl.class
+			.getName());
 
 	private static final String CONFIG_PATH = "mysql.properties";
 	private String url;
@@ -34,13 +34,14 @@ public class VisitedDaoImpl implements VisitedDao {
 		initConnection();
 	}
 
-	private void initConfig() throws IOException {
+	private void initConfig() throws Exception {
 		Properties prop = new Properties();
 		prop.load(this.getClass().getResourceAsStream(CONFIG_PATH));
 		url = prop.getProperty("url", "");
 		username = prop.getProperty("username", "");
 		password = prop.getProperty("password", "");
-		log.log(Level.INFO, "初始化Mysql连接，url={0}，username={1}，password=******", new String[] { url, username });
+		log.log(Level.INFO, "初始化Mysql连接，url={0}，username={1}，password=******",
+				new String[] { url, username });
 		if (url.equals("") || username.equals("") || password.equals("")) {
 			throw new ConfigException("配置文件不完整！");
 		}
@@ -60,7 +61,8 @@ public class VisitedDaoImpl implements VisitedDao {
 	@Override
 	public boolean isVisited(String url) throws Exception {
 		log.log(Level.FINE, "crawler_visited表包含{0}", url);
-		PreparedStatement ps = conn.prepareStatement("select 1 from crawler_visited where url_code=? limit 1");
+		PreparedStatement ps = conn
+				.prepareStatement("select 1 from crawler_visited where url_code=? limit 1");
 		ps.setString(1, MD5Util.gen32bitMD5(url));
 		ResultSet rs = ps.executeQuery();
 		if (rs.next()) {
@@ -72,8 +74,10 @@ public class VisitedDaoImpl implements VisitedDao {
 
 	@Override
 	public void add(String url, String newspaper) throws Exception {
-		log.log(Level.FINE, "增加记录到crawler_visited: url={0},newspaper={1}", new String[] { url, newspaper });
-		PreparedStatement ps = conn.prepareStatement("insert into crawler_visited (url_code,url,newspaper,timestamp) values (?,?,?,?)");
+		log.log(Level.FINE, "增加记录到crawler_visited: url={0},newspaper={1}",
+				new String[] { url, newspaper });
+		PreparedStatement ps = conn
+				.prepareStatement("insert into crawler_visited (url_code,url,newspaper,timestamp) values (?,?,?,?)");
 		ps.setString(1, MD5Util.gen32bitMD5(url));
 		ps.setString(2, url);
 		ps.setString(3, newspaper);
@@ -85,7 +89,8 @@ public class VisitedDaoImpl implements VisitedDao {
 	@Override
 	public void clear() throws Exception {
 		log.log(Level.FINE, "清空表crawler_visited");
-		PreparedStatement ps = conn.prepareStatement("truncate table crawler_visited;");
+		PreparedStatement ps = conn
+				.prepareStatement("truncate table crawler_visited;");
 		ps.execute();
 		ps.close();
 	}

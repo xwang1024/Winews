@@ -1,12 +1,12 @@
 package cn.edu.nju.winews.po;
 
-import java.io.Serializable;
+import java.util.Arrays;
 
-public class NewsPO extends BriefNewsPO implements Serializable {
+public class NewsPO extends BriefNewsPO implements IPO {
 	private static final long serialVersionUID = 8366725589441064039L;
 
 	private String content;
-	private String[] picture;
+	private NewsPicturePO[] picture;
 
 	public String getContent() {
 		return content;
@@ -16,12 +16,23 @@ public class NewsPO extends BriefNewsPO implements Serializable {
 		this.content = content;
 	}
 
-	public String[] getPicture() {
+	public NewsPicturePO[] getPicture() {
 		return picture;
 	}
 
-	public void setPicture(String[] picture) {
+	public void setPicture(NewsPicturePO[] picture) {
 		this.picture = picture;
 	}
+
+	@Override
+	public String toString() {
+		return "NewsPO [content=" + content + ", picture="
+				+ Arrays.toString(picture) + ", newspaper=" + newspaper
+				+ ", domain=" + domain + ", province=" + province + ", url="
+				+ url + ", preTitle=" + preTitle + ", title=" + title
+				+ ", subTitle=" + subTitle + ", layout=" + layout + ", date="
+				+ date + ", author=" + author + "]";
+	}
+	
 
 }

@@ -1,14 +1,13 @@
 package cn.edu.nju.winews.po;
 
-import java.io.Serializable;
 import java.util.Date;
 
-public class BriefNewsPO implements Serializable {
+public class BriefNewsPO implements IPO {
 	private static final long serialVersionUID = 745781180569643330L;
 
 	protected String newspaper;
 	protected String domain;
-	protected String privince;
+	protected String province;
 	protected String url;
 	protected String preTitle;
 	protected String title;
@@ -33,12 +32,12 @@ public class BriefNewsPO implements Serializable {
 		this.domain = domain;
 	}
 
-	public String getPrivince() {
-		return privince;
+	public String getProvince() {
+		return province;
 	}
 
-	public void setPrivince(String privince) {
-		this.privince = privince;
+	public void setProvince(String province) {
+		this.province = province;
 	}
 
 	public String getUrl() {

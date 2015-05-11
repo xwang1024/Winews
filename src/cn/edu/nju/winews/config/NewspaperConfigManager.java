@@ -155,7 +155,7 @@ public class NewspaperConfigManager {
 		}
 
 		public void setConfig(String key, String value) {
-			map.put(key, value);
+			map.put(key.trim(), value.trim());
 		}
 
 		public String toString() {

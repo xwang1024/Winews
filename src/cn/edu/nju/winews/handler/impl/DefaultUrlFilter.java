@@ -8,6 +8,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 public class DefaultUrlFilter {
+	
 	public HashSet<URL> filter(String baseUri, Elements elements) {
 		HashSet<URL> set = new HashSet<URL>();
 		URL baseUrl = null;
@@ -34,7 +35,7 @@ public class DefaultUrlFilter {
 							u = u.replaceAll("^\\./", "");
 							u = baseUri.split("\\?")[0].replaceAll(replacement
 									+ "$", u);
-							if(!u.contains("&")&&!u.contains("id")) {
+							if (!u.contains("&") && !u.contains("id")) {
 								u = u.split("\\?")[0];
 							}
 						}

@@ -1,7 +1,9 @@
 package cn.edu.nju.winews.parser;
 
-import org.jsoup.nodes.Document;
+import java.net.URL;
+
+import cn.edu.nju.winews.po.IPO;
 
 public interface IParser {
-	public void parse(Document doc);
+	public IPO parse(URL url) throws Exception;
 }

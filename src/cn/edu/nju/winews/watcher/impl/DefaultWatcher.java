@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 
 import cn.edu.nju.winews.config.NewspaperConfigManager;
 import cn.edu.nju.winews.handler.IHandler;
-import cn.edu.nju.winews.parser.IParser;
 import cn.edu.nju.winews.watcher.IWatcher;
 
 public class DefaultWatcher implements IWatcher {
@@ -94,10 +93,7 @@ public class DefaultWatcher implements IWatcher {
 
 		private final NewspaperConfigManager ncm;
 
-		private String domain;
-		private String province;
 		private IHandler handler;
-		private IParser parser;
 
 		public WatchThread(String newspaperName) throws Exception {
 			this.newspaperName = newspaperName;
@@ -106,21 +102,15 @@ public class DefaultWatcher implements IWatcher {
 		}
 
 		public void updateConfig() throws Exception {
-			domain = ncm.getCommonConfig(newspaperName,
-					NewspaperConfigManager.CommonConfig.domain);
-			province = ncm.getCommonConfig(newspaperName,
-					NewspaperConfigManager.CommonConfig.province);
+			
 			String handlerName = ncm.getCommonConfig(newspaperName,
 					NewspaperConfigManager.CommonConfig.handler);
-			String parserName = ncm.getCommonConfig(newspaperName,
-					NewspaperConfigManager.CommonConfig.parser);
 
 			Class<?> handlerClass = Class.forName(handlerName);
 			Constructor<?> handleConstructor = handlerClass.getConstructor(
-					String.class, String.class, String.class);
-			handler = (IHandler) handleConstructor.newInstance(newspaperName,
-					domain, province);
-			parser = (IParser) Class.forName(parserName).newInstance();
+					String.class);
+			handler = (IHandler) handleConstructor.newInstance(newspaperName);
+
 		}
 
 		private String fillDate(String url, String dateFormat, Date date) {
@@ -149,7 +139,6 @@ public class DefaultWatcher implements IWatcher {
 
 				try {
 					handler.setStartUrl(url);
-					handler.setParser(parser);
 					handler.handle();
 				} catch (Exception e1) {
 					log.log(Level.SEVERE, "Handler Error: {0}", e1.getMessage());
