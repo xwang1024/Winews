@@ -69,6 +69,7 @@ public class DefaultParser implements IParser {
 		news.setUrl(url.toString());
 		news.setNewspaper(newspaperName);
 		news.setPreTitle(doc.select(selector_preTitle).text().trim());
+		System.out.println(selector_title);
 		news.setTitle(doc.select(selector_title).first().text().trim());
 		String subTitle = "";
 		for (Element e : doc.select(selector_subTitle)) {
@@ -169,9 +170,9 @@ public class DefaultParser implements IParser {
 		DefaultParser p;
 		IPO news;
 		try {
-			p = new DefaultParser("新华日报");
+			p = new DefaultParser("安徽日报");
 			news = p.parse(new URL(
-					"http://xh.xhby.net/mp2/html/2015-05/11/content_1245801.htm"));
+					"http://epaper.anhuinews.com/html/ahrb/20150511/article_3308854.shtml"));
 			System.out.println(news);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();

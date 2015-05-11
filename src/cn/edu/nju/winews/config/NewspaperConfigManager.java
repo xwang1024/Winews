@@ -14,6 +14,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class NewspaperConfigManager {
+	private static final String DEFAULT_NULL = "NULL";
 	private static final String PATH = "conf/newspaper.xml";
 	private static final String URL_CONFIG_PREFIX = "url_";
 	private static final String SELECTOR_CONFIG_PREFIX = "selector_";
@@ -75,7 +76,11 @@ public class NewspaperConfigManager {
 
 		NodeList nodelist = node.getChildNodes();
 		if (nodelist.getLength() <= 1) {
-			detail.setConfig(newBase, node.getTextContent().trim());
+			String value = node.getTextContent().trim();
+			if(value.length() == 0) {
+				value = DEFAULT_NULL;
+			}
+			detail.setConfig(newBase, value);
 		} else {
 			for (int i = 0; i < nodelist.getLength(); i++) {
 				fillConfig(detail, nodelist.item(i), newBase);
@@ -96,24 +101,39 @@ public class NewspaperConfigManager {
 		NewsPaperConfig conf = confMap.get(paperName);
 		if (conf == null)
 			return null;
-		else
-			return conf.getConfig(configName.toString());
+		else {
+			String result = conf.getConfig(configName.toString());
+			if(result == null) {
+				result = DEFAULT_NULL;
+			}
+			return result;
+		}
 	}
 
 	public String getUrlConfig(String paperName, UrlConfig configName) {
 		NewsPaperConfig conf = confMap.get(paperName);
 		if (conf == null)
 			return null;
-		else
-			return conf.getConfig(URL_CONFIG_PREFIX + configName.toString());
+		else {
+			String result = conf.getConfig(URL_CONFIG_PREFIX + configName.toString());
+			if(result == null) {
+				result = DEFAULT_NULL;
+			}
+			return result;
+		}
 	}
 
 	public String getSelector(String paperName, Selector selectorName) {
 		NewsPaperConfig conf = confMap.get(paperName);
 		if (conf == null)
 			return null;
-		else
-			return conf.getConfig(SELECTOR_CONFIG_PREFIX + selectorName.toString());
+		else{
+			String result = conf.getConfig(SELECTOR_CONFIG_PREFIX + selectorName.toString());
+			if(result == null) {
+				result = DEFAULT_NULL;
+			}
+			return result;
+		}
 	}
 
 	public String toString() {
