@@ -1,7 +1,5 @@
 package cn.edu.nju.winews.handler.impl;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.text.DateFormat;
@@ -24,9 +22,9 @@ import cn.edu.nju.winews.dao.VisitedDao;
 import cn.edu.nju.winews.dao.impl.NewsDaoImpl;
 import cn.edu.nju.winews.dao.impl.VisitedDaoImpl;
 import cn.edu.nju.winews.handler.IHandler;
+import cn.edu.nju.winews.model.News;
+import cn.edu.nju.winews.model.VisitedRecord;
 import cn.edu.nju.winews.parser.IParser;
-import cn.edu.nju.winews.po.BriefNewsPO;
-import cn.edu.nju.winews.po.NewsPO;
 
 public class DefaultHandler implements IHandler {
 	private static final Logger log = Logger.getLogger(DefaultHandler.class.getName());
@@ -139,7 +137,11 @@ public class DefaultHandler implements IHandler {
 			if (linkDate.equals(curDate)) {
 				// 如果该链接没有被爬取过
 				if (!vistiedDao.isVisited(link.toString())) {
-					vistiedDao.add(link.toString(), newspaperName); // 链接加入链接列表
+					VisitedRecord record = new VisitedRecord();
+					record.setNewspaper(newspaperName);
+					record.setUrl(link.toString());
+					record.setTimestamp(new Date());
+					vistiedDao.add(record); // 链接加入链接列表
 					// 如果是节点链接
 					if (Pattern.matches(pattern_node, link.toString())) {
 						log.log(Level.INFO, "Newspaper: {0}, Node URL: {1}", new String[] { newspaperName, link.toString() });
@@ -152,9 +154,9 @@ public class DefaultHandler implements IHandler {
 						// 如果是正文链接
 					} else if (Pattern.matches(pattern_content, link.toString())) {
 						log.log(Level.INFO, "Newspaper: {0}, Content URL: {1}", new String[] { newspaperName, link.toString() });
-						NewsPO news = null;
+						News news = null;
 						try {
-							news = (NewsPO) parser.parse(link);
+							news = (News) parser.parse(link);
 							news.setDate(curDate);
 							news.setDomain(domain);
 							news.setProvince(province);
@@ -172,54 +174,4 @@ public class DefaultHandler implements IHandler {
 			}
 		}
 	}
-
-	public static void main(String[] args) throws Exception {
-		DefaultHandler h = new DefaultHandler("新华日报");
-		h.setNewsDao(new NewsDao() {
-			public BriefNewsPO[] search(String[] keywords) throws Exception {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public NewsPO get(String id) throws Exception {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public boolean exists(String id) throws Exception {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public String add(NewsPO news) throws Exception {
-				BufferedWriter bfr = new BufferedWriter(new FileWriter("tmp/" + news.getTitle() + ".txt"));
-				bfr.write(news.toString());
-				bfr.close();
-				return null;
-			}
-		});
-		h.setVisitedDao(new VisitedDao() {
-			HashSet<String> set = new HashSet<String>();
-
-			public boolean isVisited(String url) throws Exception {
-				return set.contains(url);
-			}
-
-			@Override
-			public void clear() throws Exception {
-				set.clear();
-			}
-
-			@Override
-			public void add(String url, String newspaper) throws Exception {
-				set.add(url);
-			}
-		});
-		h.setStartUrl(new URL("http://xh.xhby.net/mp2/html/2015-05/11/node_2.htm"));
-		h.handle();
-	}
-
 }

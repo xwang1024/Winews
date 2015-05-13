@@ -1,11 +1,11 @@
 package cn.edu.nju.winews.dao;
 
-import cn.edu.nju.winews.po.BriefNewsPO;
-import cn.edu.nju.winews.po.NewsPO;
+import cn.edu.nju.winews.model.BriefNews;
+import cn.edu.nju.winews.model.News;
 
 public interface NewsDao {
 	public boolean exists(String url) throws Exception;
-	public String add(NewsPO news) throws Exception;
-	public NewsPO get(String url) throws Exception;
-	public BriefNewsPO[] search(String[] keywords) throws Exception;
+	public String add(News news) throws Exception;
+	public News get(String url) throws Exception;
+	public BriefNews[] search(String[] keywords) throws Exception;
 }

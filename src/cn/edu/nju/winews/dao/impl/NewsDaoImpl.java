@@ -1,8 +1,8 @@
 package cn.edu.nju.winews.dao.impl;
 
 import cn.edu.nju.winews.dao.NewsDao;
-import cn.edu.nju.winews.po.BriefNewsPO;
-import cn.edu.nju.winews.po.NewsPO;
+import cn.edu.nju.winews.model.BriefNews;
+import cn.edu.nju.winews.model.News;
 
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
@@ -21,18 +21,18 @@ public class NewsDaoImpl implements NewsDao {
 	}
 
 	@Override
-	public String add(NewsPO news) throws Exception {
+	public String add(News news) throws Exception {
 		System.out.println(news);
 		return null;
 	}
 
 	@Override
-	public NewsPO get(String id) throws Exception {
+	public News get(String id) throws Exception {
 		return null;
 	}
 
 	@Override
-	public BriefNewsPO[] search(String[] keywords) throws Exception {
+	public BriefNews[] search(String[] keywords) throws Exception {
 		return null;
 	}
 

@@ -1,11 +1,6 @@
 package cn.edu.nju.winews.dao.impl;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.net.UnknownHostException;
 import java.util.Date;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -13,86 +8,83 @@ import java.util.logging.Logger;
 
 import cn.edu.nju.winews.dao.VisitedDao;
 import cn.edu.nju.winews.dao.impl.exception.ConfigException;
-import cn.edu.nju.winews.util.MD5Util;
+import cn.edu.nju.winews.model.VisitedRecord;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.MongoClient;
 
 public class VisitedDaoImpl implements VisitedDao {
-	private static final Logger log = Logger.getLogger(VisitedDaoImpl.class
-			.getName());
+	private static final Logger logger = Logger.getLogger(VisitedDaoImpl.class.getName());
 
-	private static final String CONFIG_PATH = "mysql.properties";
-	private String url;
-	private String username;
-	private String password;
-	private Connection conn;
+	private static final String CONFIG_FILENAME = "mongo.properties";
+	private static MongoClient mongo;
+	private static DB db;
+
+	private String host, username, password;
+	private int port;
 
 	public VisitedDaoImpl() throws Exception {
-		initialize();
-	}
-
-	private void initialize() throws Exception {
 		initConfig();
 		initConnection();
 	}
 
 	private void initConfig() throws Exception {
 		Properties prop = new Properties();
-		prop.load(this.getClass().getResourceAsStream(CONFIG_PATH));
-		url = prop.getProperty("url", "");
+		prop.load(this.getClass().getResourceAsStream(CONFIG_FILENAME));
+		host = prop.getProperty("host", "");
+		port = Integer.parseInt(prop.getProperty("port", "-1"));
 		username = prop.getProperty("username", "");
 		password = prop.getProperty("password", "");
-		log.log(Level.INFO, "初始化Mysql连接，url={0}，username={1}，password=******",
-				new String[] { url, username });
-		if (url.equals("") || username.equals("") || password.equals("")) {
+		logger.log(Level.INFO, "初始化Mongodb连接，url={0}:{1}，username={2}，password={3}", new String[] { host, port + "", username, password });
+		if (host.equals("") || port == -1 || username.equals("") || password.equals("")) {
 			throw new ConfigException("配置文件不完整！");
 		}
 	}
 
-	private void initConnection() throws ClassNotFoundException, SQLException {
-		try {
-			Class.forName("com.mysql.jdbc.Driver");
-			conn = DriverManager.getConnection(url, username, password);
-		} catch (ClassNotFoundException e) {
-			log.log(Level.SEVERE, e.getMessage());
-			throw e;
-		}
-
+	private void initConnection() throws UnknownHostException {
+		mongo = new MongoClient(host, port);
+		db = mongo.getDB("winews");
 	}
 
 	@Override
 	public boolean isVisited(String url) throws Exception {
-		log.log(Level.FINE, "crawler_visited表包含{0}", url);
-		PreparedStatement ps = conn
-				.prepareStatement("select 1 from crawler_visited where url_code=? limit 1");
-		ps.setString(1, MD5Util.gen32bitMD5(url));
-		ResultSet rs = ps.executeQuery();
-		if (rs.next()) {
-			return true;
-		}
-		ps.close();
-		return false;
+		logger.log(Level.FINE, "Search visited url");
+		DBCollection coll = db.getCollection("visited_url");
+		BasicDBObject dbObj = new BasicDBObject("url", url);
+		return coll.findOne(dbObj) != null;
 	}
 
 	@Override
-	public void add(String url, String newspaper) throws Exception {
-		log.log(Level.FINE, "增加记录到crawler_visited: url={0},newspaper={1}",
-				new String[] { url, newspaper });
-		PreparedStatement ps = conn
-				.prepareStatement("insert into crawler_visited (url_code,url,newspaper,timestamp) values (?,?,?,?)");
-		ps.setString(1, MD5Util.gen32bitMD5(url));
-		ps.setString(2, url);
-		ps.setString(3, newspaper);
-		ps.setTimestamp(4, new Timestamp(new Date().getTime()));
-		ps.execute();
-		ps.close();
+	public void add(VisitedRecord record) throws Exception {
+		String url = record.getUrl();
+		String newspaper = record.getNewspaper();
+		Date timestamp = record.getTimestamp();
+		logger.log(Level.FINE, "Add visited url");
+		DBCollection coll = db.getCollection("visited_url");
+		BasicDBObject dbObj = new BasicDBObject("url", url).append("newspaper", newspaper).append("timestamp", timestamp);
+		try {
+			coll.save(dbObj);
+		} catch (Exception e) {
+			if (e.getMessage().contains("duplicate key")) {
+				logger.log(Level.WARNING, "Duplicate key, url={0}", url);
+			}
+		}
 	}
 
 	@Override
 	public void clear() throws Exception {
-		log.log(Level.FINE, "清空表crawler_visited");
-		PreparedStatement ps = conn
-				.prepareStatement("truncate table crawler_visited;");
-		ps.execute();
-		ps.close();
+		logger.log(Level.FINE, "Clear visited url");
+		DBCollection coll = db.getCollection("visited_url");
+		coll.remove(new BasicDBObject());
 	}
 
+	public static void main(String[] args) throws Exception {
+		VisitedRecord re = new VisitedRecord();
+		re.setNewspaper("123");
+		re.setUrl("333");
+		re.setTimestamp(new Date());
+		new VisitedDaoImpl().add(re);
+	}
 }

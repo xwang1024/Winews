@@ -1,8 +1,9 @@
-package cn.edu.nju.winews.po;
+package cn.edu.nju.winews.model;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class BriefNewsPO implements IPO {
+public class BriefNews implements Serializable {
 	private static final long serialVersionUID = 745781180569643330L;
 
 	protected String newspaper;

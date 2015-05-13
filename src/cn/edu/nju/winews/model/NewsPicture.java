@@ -1,6 +1,8 @@
-package cn.edu.nju.winews.po;
+package cn.edu.nju.winews.model;
 
-public class NewsPicturePO implements IPO {
+import java.io.Serializable;
+
+public class NewsPicture implements Serializable {
 
 	private static final long serialVersionUID = -8144739215145426267L;
 

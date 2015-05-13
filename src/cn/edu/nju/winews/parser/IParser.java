@@ -1,9 +1,8 @@
 package cn.edu.nju.winews.parser;
 
+import java.io.Serializable;
 import java.net.URL;
 
-import cn.edu.nju.winews.po.IPO;
-
 public interface IParser {
-	public IPO parse(URL url) throws Exception;
+	public Serializable parse(URL url) throws Exception;
 }

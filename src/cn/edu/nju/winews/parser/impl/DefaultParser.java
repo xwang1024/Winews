@@ -1,5 +1,6 @@
 package cn.edu.nju.winews.parser.impl;
 
+import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -12,14 +13,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import cn.edu.nju.winews.config.NewspaperConfigManager;
+import cn.edu.nju.winews.model.News;
+import cn.edu.nju.winews.model.NewsPicture;
 import cn.edu.nju.winews.parser.IParser;
-import cn.edu.nju.winews.po.IPO;
-import cn.edu.nju.winews.po.NewsPO;
-import cn.edu.nju.winews.po.NewsPicturePO;
 
 public class DefaultParser implements IParser {
-	private static final Logger log = Logger.getLogger(DefaultParser.class
-			.getName());
+	private static final Logger log = Logger.getLogger(DefaultParser.class.getName());
 
 	private String newspaperName;
 
@@ -40,32 +39,19 @@ public class DefaultParser implements IParser {
 
 	protected void initConfig() throws Exception {
 		NewspaperConfigManager ncm = NewspaperConfigManager.getInstance();
-		selector_preTitle = ncm.getSelector(newspaperName,
-				NewspaperConfigManager.Selector.preTitle);
-		selector_title = ncm.getSelector(newspaperName,
-				NewspaperConfigManager.Selector.title);
-		selector_subTitle = ncm.getSelector(newspaperName,
-				NewspaperConfigManager.Selector.subTitle);
-		selector_layout = ncm.getSelector(newspaperName,
-				NewspaperConfigManager.Selector.layout);
-		selector_author = ncm.getSelector(newspaperName,
-				NewspaperConfigManager.Selector.author);
-		selector_content = ncm.getSelector(newspaperName,
-				NewspaperConfigManager.Selector.content);
-		selector_picture = ncm.getSelector(newspaperName,
-				NewspaperConfigManager.Selector.picture);
+		selector_preTitle = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.preTitle);
+		selector_title = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.title);
+		selector_subTitle = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.subTitle);
+		selector_layout = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.layout);
+		selector_author = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.author);
+		selector_content = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.content);
+		selector_picture = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.picture);
 	}
 
-	public IPO parse(URL url) throws Exception {
-		Document doc = Jsoup
-				.connect(url.toString())
-				.ignoreContentType(true)
-				.ignoreHttpErrors(true)
-				.timeout(timeoutMillis)
-				.userAgent(
-						"Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0")
-				.get();
-		NewsPO news = new NewsPO();
+	public Serializable parse(URL url) throws Exception {
+		Document doc = Jsoup.connect(url.toString()).ignoreContentType(true).ignoreHttpErrors(true).timeout(timeoutMillis)
+				.userAgent("Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0").get();
+		News news = new News();
 		news.setUrl(url.toString());
 		news.setNewspaper(newspaperName);
 		news.setPreTitle(doc.select(selector_preTitle).text().trim());
@@ -93,47 +79,39 @@ public class DefaultParser implements IParser {
 				Document newDoc = Jsoup.parse(raw);
 				String[] lines = newDoc.text().split("\\[BREnter\\]");
 				for (int i = 0; i < lines.length; i++) {
-					String line = lines[i].trim().replaceAll("^( |　)*", "")
-							.replaceAll("( |　)*$", "").replace("　　", "\n")
-							.trim()
-							+ "\n";
+					String line = lines[i].trim().replaceAll("^( |　)*", "").replaceAll("( |　)*$", "").replace("　　", "\n").trim() + "\n";
 					if (line.length() > 1) {
 						sb.append(line);
 					}
 				}
 			} else {
-				String line = e.text().trim().replaceAll("^( |　)*", "")
-						.replaceAll("( |　)*$", "").replace("　　", "\n")
-						+ "\n";
+				String line = e.text().trim().replaceAll("^( |　)*", "").replaceAll("( |　)*$", "").replace("　　", "\n") + "\n";
 				if (line.length() > 1) {
 					sb.append(line);
 				}
 			}
 		}
 		news.setContent(sb.toString());
-		ArrayList<NewsPicturePO> picList = new ArrayList<NewsPicturePO>();
+		ArrayList<NewsPicture> picList = new ArrayList<NewsPicture>();
 		for (Element e : doc.select(selector_picture)) {
 			if (e.getElementsByTag("img").isEmpty()) {
 				continue;
 			}
 			String picRelUrl = e.getElementsByTag("img").attr("src");
-			NewsPicturePO pic = new NewsPicturePO();
+			NewsPicture pic = new NewsPicture();
 			try {
 				URL picUrl = new URL(picRelUrl);
 				pic.setUrl(picUrl.toString());
 			} catch (MalformedURLException e2) {
 				String picAbsUrl;
 				if (picRelUrl.startsWith("/")) {
-					picAbsUrl = url.getProtocol() + "://" + url.getHost()
-							+ picRelUrl;
+					picAbsUrl = url.getProtocol() + "://" + url.getHost() + picRelUrl;
 				} else {
 					String[] urlSp = url.toString().split("/");
-					String rootUrl = url.toString().replace(
-							urlSp[urlSp.length - 1], "");
+					String rootUrl = url.toString().replace(urlSp[urlSp.length - 1], "");
 					while (picRelUrl.startsWith("../")) {
 						urlSp = rootUrl.split("/");
-						rootUrl = rootUrl.replace(
-								urlSp[urlSp.length - 1] + "/", "");
+						rootUrl = rootUrl.replace(urlSp[urlSp.length - 1] + "/", "");
 						picRelUrl = picRelUrl.substring(3);
 					}
 					picAbsUrl = rootUrl + picRelUrl;
@@ -141,38 +119,30 @@ public class DefaultParser implements IParser {
 				try {
 					pic.setUrl(new URL(picAbsUrl).toString());
 				} catch (MalformedURLException e1) {
-					log.log(Level.INFO,
-							"Newspaper: {0}, URL Create Error: {1}",
-							new String[] { newspaperName, e1.getMessage() });
+					log.log(Level.INFO, "Newspaper: {0}, URL Create Error: {1}", new String[] { newspaperName, e1.getMessage() });
 					continue;
 				}
 			}
-			pic.setComment(e.text().trim().replaceAll("^ *", "")
-					.replaceAll(" *$", ""));
+			pic.setComment(e.text().trim().replaceAll("^ *", "").replaceAll(" *$", ""));
 			if (pic.getComment().equals("")) {
-				pic.setComment(e.getElementsByAttribute("data-title").attr(
-						"data-title"));
+				pic.setComment(e.getElementsByAttribute("data-title").attr("data-title"));
 			}
 			if (pic.getComment().equals("")) {
 				pic.setComment(e.getElementsByAttribute("title").attr("title"));
 			}
-			log.log(Level.INFO,
-					"Newspaper: {0}, Picture URL: {1}, Comment: {2}",
-					new String[] { newspaperName, pic.getUrl(),
-							pic.getComment() });
+			log.log(Level.INFO, "Newspaper: {0}, Picture URL: {1}, Comment: {2}", new String[] { newspaperName, pic.getUrl(), pic.getComment() });
 			picList.add(pic);
 		}
-		news.setPicture(picList.toArray(new NewsPicturePO[picList.size()]));
+		news.setPicture(picList.toArray(new NewsPicture[picList.size()]));
 		return news;
 	}
 
 	public static void main(String[] args) throws Exception {
 		DefaultParser p;
-		IPO news;
+		Serializable news;
 		try {
 			p = new DefaultParser("安徽日报");
-			news = p.parse(new URL(
-					"http://epaper.anhuinews.com/html/ahrb/20150511/article_3308854.shtml"));
+			news = p.parse(new URL("http://epaper.anhuinews.com/html/ahrb/20150511/article_3308854.shtml"));
 			System.out.println(news);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
