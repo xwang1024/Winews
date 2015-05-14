@@ -51,7 +51,6 @@ public class DefaultHandler implements IHandler {
 		try {
 			vistiedDao = new VisitedDaoImpl();
 			newsDao = new NewsDaoImpl();
-			vistiedDao.clear();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -77,12 +76,12 @@ public class DefaultHandler implements IHandler {
 	public void handle() throws Exception {
 		// 检查起始URL是否为空
 		if (startUrl == null) {
-			log.log(Level.INFO, "Handler {0}: URL is null!");
+			log.log(Level.INFO, "Handler {0}: URL is null!",newspaperName);
 			return;
 		}
 		// 检查起始URL是否被爬取
 		if (vistiedDao.isVisited(startUrl.toString())) {
-			log.log(Level.INFO, "Handler {0}: URL {1} has been visited!");
+			log.log(Level.INFO, "Handler {0}: URL {1} has been visited!",new String[]{newspaperName,startUrl.toString()});
 			return;
 		}
 		// 初始化配置

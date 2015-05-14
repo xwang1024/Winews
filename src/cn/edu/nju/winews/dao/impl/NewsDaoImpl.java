@@ -37,7 +37,6 @@ public class NewsDaoImpl implements NewsDao {
 	public String add(News news) throws Exception {
 		DBCollection coll = db.getCollection(tableName);
 		DBObject dbObj = WiConvertor.news2DBObject(news);
-		System.out.println(dbObj);
 		coll.insert(dbObj);
 		return news.getUrl();
 	}
