@@ -1,51 +1,23 @@
 package cn.edu.nju.winews.dao.impl;
 
-import java.net.UnknownHostException;
 import java.util.Date;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import cn.edu.nju.winews.dao.VisitedDao;
-import cn.edu.nju.winews.dao.impl.exception.ConfigException;
 import cn.edu.nju.winews.model.VisitedRecord;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.MongoClient;
 
 public class VisitedDaoImpl implements VisitedDao {
 	private static final Logger logger = Logger.getLogger(VisitedDaoImpl.class.getName());
 
-	private static final String CONFIG_FILENAME = "mongo.properties";
-	private static MongoClient mongo;
-	private static DB db;
-
-	private String host, username, password;
-	private int port;
+	private DB db;
 
 	public VisitedDaoImpl() throws Exception {
-		initConfig();
-		initConnection();
-	}
-
-	private void initConfig() throws Exception {
-		Properties prop = new Properties();
-		prop.load(this.getClass().getResourceAsStream(CONFIG_FILENAME));
-		host = prop.getProperty("host", "");
-		port = Integer.parseInt(prop.getProperty("port", "-1"));
-		username = prop.getProperty("username", "");
-		password = prop.getProperty("password", "");
-		logger.log(Level.INFO, "初始化Mongodb连接，url={0}:{1}，username={2}，password={3}", new String[] { host, port + "", username, password });
-		if (host.equals("") || port == -1 || username.equals("") || password.equals("")) {
-			throw new ConfigException("配置文件不完整！");
-		}
-	}
-
-	private void initConnection() throws UnknownHostException {
-		mongo = new MongoClient(host, port);
-		db = mongo.getDB("winews");
+		db = MongoHelper.getInstance().getDb();
 	}
 
 	@Override

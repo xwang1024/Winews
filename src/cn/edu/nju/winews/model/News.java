@@ -7,7 +7,7 @@ public class News extends BriefNews implements Serializable {
 	private static final long serialVersionUID = 8366725589441064039L;
 
 	private String content;
-	private NewsPicture[] picture;
+	private NewsPicture[] pictures;
 
 	public String getContent() {
 		return content;
@@ -17,17 +17,17 @@ public class News extends BriefNews implements Serializable {
 		this.content = content;
 	}
 
-	public NewsPicture[] getPicture() {
-		return picture;
+	public NewsPicture[] getPictures() {
+		return pictures;
 	}
 
-	public void setPicture(NewsPicture[] picture) {
-		this.picture = picture;
+	public void setPictures(NewsPicture[] pictures) {
+		this.pictures = pictures;
 	}
 
 	@Override
 	public String toString() {
-		return "NewsPO [content=" + content + ", picture=" + Arrays.toString(picture) + ", newspaper=" + newspaper + ", domain=" + domain
+		return "NewsPO [content=" + content + ", picture=" + Arrays.toString(pictures) + ", newspaper=" + newspaper + ", domain=" + domain
 				+ ", province=" + province + ", url=" + url + ", preTitle=" + preTitle + ", title=" + title + ", subTitle=" + subTitle + ", layout="
 				+ layout + ", date=" + date + ", author=" + author + "]";
 	}

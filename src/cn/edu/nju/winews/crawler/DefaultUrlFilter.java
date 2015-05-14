@@ -1,4 +1,4 @@
-package cn.edu.nju.winews.handler.impl;
+package cn.edu.nju.winews.crawler;
 
 import java.net.MalformedURLException;
 import java.net.URL;

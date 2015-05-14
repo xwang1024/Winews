@@ -1,4 +1,4 @@
-package cn.edu.nju.winews.watcher;
+package cn.edu.nju.winews.crawler;
 
 public interface IWatcher {
 	public void start() throws Exception;

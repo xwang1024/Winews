@@ -1,9 +1,10 @@
-package cn.edu.nju.winews.parser.impl;
+package cn.edu.nju.winews.crawler;
 
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,7 +16,6 @@ import org.jsoup.nodes.Element;
 import cn.edu.nju.winews.config.NewspaperConfigManager;
 import cn.edu.nju.winews.model.News;
 import cn.edu.nju.winews.model.NewsPicture;
-import cn.edu.nju.winews.parser.IParser;
 
 public class DefaultParser implements IParser {
 	private static final Logger log = Logger.getLogger(DefaultParser.class.getName());
@@ -23,6 +23,7 @@ public class DefaultParser implements IParser {
 	private String newspaperName;
 
 	private int timeoutMillis;
+	private Date date;
 
 	private String selector_preTitle;
 	private String selector_title;
@@ -32,20 +33,44 @@ public class DefaultParser implements IParser {
 	private String selector_content;
 	private String selector_picture;
 
-	public DefaultParser(String newspaperName) throws Exception {
+	public DefaultParser(String newspaperName, Date date) throws Exception {
 		this.newspaperName = newspaperName;
+		this.date = date;
 		initConfig();
 	}
 
 	protected void initConfig() throws Exception {
 		NewspaperConfigManager ncm = NewspaperConfigManager.getInstance();
-		selector_preTitle = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.preTitle);
-		selector_title = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.title);
-		selector_subTitle = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.subTitle);
-		selector_layout = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.layout);
-		selector_author = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.author);
-		selector_content = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.content);
-		selector_picture = ncm.getSelector(newspaperName, NewspaperConfigManager.Selector.picture);
+		selector_preTitle = ncm.getSelector(newspaperName, date, NewspaperConfigManager.Selector.preTitle);
+		selector_title = ncm.getSelector(newspaperName, date, NewspaperConfigManager.Selector.title);
+		selector_subTitle = ncm.getSelector(newspaperName, date, NewspaperConfigManager.Selector.subTitle);
+		selector_layout = ncm.getSelector(newspaperName, date, NewspaperConfigManager.Selector.layout);
+		selector_author = ncm.getSelector(newspaperName, date, NewspaperConfigManager.Selector.author);
+		selector_content = ncm.getSelector(newspaperName, date, NewspaperConfigManager.Selector.content);
+		selector_picture = ncm.getSelector(newspaperName, date, NewspaperConfigManager.Selector.picture);
+	}
+
+	private String select(Document doc, String selector) {
+		String s = null;
+		// 如果是复合式selector
+		if (selector.contains(":")) {
+			String[] sp = selector.split(":");
+			String mainSelector = sp[0];
+			String condition = sp[1];
+			if (condition.toLowerCase().contains("nth-child")) {
+				int index = Integer.parseInt(condition.split("\\(")[1].replace(')', ' ').trim()) - 1;
+				s = doc.select(mainSelector).get(index).text();
+			} else if (condition.toLowerCase().contains("not")) {
+				s = doc.select(selector).text();
+			} else {
+				s = "";
+				log.log(Level.INFO, "Unimplemented condition: {0}", condition);
+			}
+		} else {
+			s = doc.select(selector).text();
+		}
+		s = s.trim().replaceAll(" ", "").replaceAll(" ", "").replaceAll("&nbsp;", "").trim();
+		return s;
 	}
 
 	public Serializable parse(URL url) throws Exception {
@@ -54,16 +79,12 @@ public class DefaultParser implements IParser {
 		News news = new News();
 		news.setUrl(url.toString());
 		news.setNewspaper(newspaperName);
-		news.setPreTitle(doc.select(selector_preTitle).text().trim());
-		System.out.println(selector_title);
-		news.setTitle(doc.select(selector_title).first().text().trim());
-		String subTitle = "";
-		for (Element e : doc.select(selector_subTitle)) {
-			subTitle += e.text().trim() + " ";
-		}
-		news.setSubTitle(subTitle.trim().replace(news.getTitle(), " "));
-		news.setAuthor(doc.select(selector_author).text().trim());
-		news.setLayout(doc.select(selector_layout).text().trim());
+
+		news.setPreTitle(select(doc, selector_preTitle));
+		news.setTitle(select(doc, selector_title));
+		news.setSubTitle(select(doc, selector_subTitle));
+		news.setAuthor(select(doc, selector_author));
+		news.setLayout(select(doc, selector_layout).replace(":", "：").replace("●", "："));
 		StringBuilder sb = new StringBuilder();
 		for (Element e : doc.select(selector_content)) {
 			if (!e.getElementsByTag("br").isEmpty()) {
@@ -133,7 +154,7 @@ public class DefaultParser implements IParser {
 			log.log(Level.INFO, "Newspaper: {0}, Picture URL: {1}, Comment: {2}", new String[] { newspaperName, pic.getUrl(), pic.getComment() });
 			picList.add(pic);
 		}
-		news.setPicture(picList.toArray(new NewsPicture[picList.size()]));
+		news.setPictures(picList.toArray(new NewsPicture[picList.size()]));
 		return news;
 	}
 
@@ -141,8 +162,8 @@ public class DefaultParser implements IParser {
 		DefaultParser p;
 		Serializable news;
 		try {
-			p = new DefaultParser("安徽日报");
-			news = p.parse(new URL("http://epaper.anhuinews.com/html/ahrb/20150511/article_3308854.shtml"));
+			p = new DefaultParser("云南日报", new Date());
+			news = p.parse(new URL("http://yndaily.yunnan.cn/html/2015-05/14/content_964520.htm"));
 			System.out.println(news);
 		} catch (MalformedURLException e) {
 			e.printStackTrace();

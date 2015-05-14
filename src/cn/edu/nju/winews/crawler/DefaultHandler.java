@@ -1,4 +1,4 @@
-package cn.edu.nju.winews.handler.impl;
+package cn.edu.nju.winews.crawler;
 
 import java.lang.reflect.Constructor;
 import java.net.URL;
@@ -21,10 +21,8 @@ import cn.edu.nju.winews.dao.NewsDao;
 import cn.edu.nju.winews.dao.VisitedDao;
 import cn.edu.nju.winews.dao.impl.NewsDaoImpl;
 import cn.edu.nju.winews.dao.impl.VisitedDaoImpl;
-import cn.edu.nju.winews.handler.IHandler;
 import cn.edu.nju.winews.model.News;
 import cn.edu.nju.winews.model.VisitedRecord;
-import cn.edu.nju.winews.parser.IParser;
 
 public class DefaultHandler implements IHandler {
 	private static final Logger log = Logger.getLogger(DefaultHandler.class.getName());
@@ -45,18 +43,27 @@ public class DefaultHandler implements IHandler {
 	private String pattern_date;
 	private String format_date;
 
-	private Date curDate;
+	private Date date;
 
-	public DefaultHandler(String newspaperName) throws Exception {
+	public DefaultHandler(String newspaperName) {
 		this.newspaperName = newspaperName;
-		vistiedDao = new VisitedDaoImpl();
-		newsDao = new NewsDaoImpl();
-		vistiedDao.clear();
+		
+		try {
+			vistiedDao = new VisitedDaoImpl();
+			newsDao = new NewsDaoImpl();
+			vistiedDao.clear();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	public void setDate(Date date) {
+		this.date = date;
 	}
 
 	public void setStartUrl(URL startUrl) {
 		this.startUrl = startUrl;
 	}
+	
 
 	public void setVisitedDao(VisitedDao visitedDao) {
 		this.vistiedDao = visitedDao;
@@ -88,16 +95,17 @@ public class DefaultHandler implements IHandler {
 		NewspaperConfigManager ncm = NewspaperConfigManager.getInstance();
 		domain = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.domain);
 		province = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.province);
-		pattern_node = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.pattern_node);
-		pattern_content = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.pattern_content);
-		pattern_date = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.pattern_date);
-		format_date = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.format_date);
-
+		pattern_node = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.pattern_node);
+		pattern_content = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.pattern_content);
+		pattern_date = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.pattern_date);
+		format_date = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_date);
+		// 此处必须重置时间
+		date = getDateFromLink(startUrl.toString());
+		
 		String parserName = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.parser);
-		Constructor<?> constructor = Class.forName(parserName).getConstructor(String.class);
-		parser = (IParser) constructor.newInstance(newspaperName);
+		Constructor<?> constructor = Class.forName(parserName).getConstructor(String.class,Date.class);
+		parser = (IParser) constructor.newInstance(newspaperName,date);
 
-		curDate = getDateFromLink(startUrl.toString());
 	}
 
 	private Date getDateFromLink(String url) throws ParseException {
@@ -134,7 +142,7 @@ public class DefaultHandler implements IHandler {
 			Date linkDate = getDateFromLink(url.toString());
 			// 节点链接日期应该等于当前日期
 
-			if (linkDate.equals(curDate)) {
+			if (linkDate.equals(date)) {
 				// 如果该链接没有被爬取过
 				if (!vistiedDao.isVisited(link.toString())) {
 					VisitedRecord record = new VisitedRecord();
@@ -157,17 +165,16 @@ public class DefaultHandler implements IHandler {
 						News news = null;
 						try {
 							news = (News) parser.parse(link);
-							news.setDate(curDate);
+							news.setDate(date);
 							news.setDomain(domain);
 							news.setProvince(province);
-							if (news.getLayout().equals("")) {
-								news.setLayout(doc.select("#banzhibar>div").first().text().trim());
-							}
+//							if (news.getLayout().equals("")) {
+//								news.setLayout(doc.select("#banzhibar>div").first().text().trim());
+//							}
 						} catch (Exception e) {
 							e.printStackTrace();
 							continue;
 						}
-						// 如果有标题就保存
 						newsDao.add(news);
 					}
 				}

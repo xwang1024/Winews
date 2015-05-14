@@ -1,4 +1,4 @@
-package cn.edu.nju.winews.parser;
+package cn.edu.nju.winews.crawler;
 
 import java.io.Serializable;
 import java.net.URL;

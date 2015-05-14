@@ -1,4 +1,4 @@
-package cn.edu.nju.winews.watcher.impl;
+package cn.edu.nju.winews.crawler;
 
 import java.lang.reflect.Constructor;
 import java.net.URL;
@@ -9,8 +9,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import cn.edu.nju.winews.config.NewspaperConfigManager;
-import cn.edu.nju.winews.handler.IHandler;
-import cn.edu.nju.winews.watcher.IWatcher;
 
 public class DefaultWatcher implements IWatcher {
 	private static final Logger log = Logger.getLogger(DefaultWatcher.class.getName());
@@ -98,9 +96,7 @@ public class DefaultWatcher implements IWatcher {
 		}
 
 		public void updateConfig() throws Exception {
-
 			String handlerName = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.handler);
-
 			Class<?> handlerClass = Class.forName(handlerName);
 			Constructor<?> handleConstructor = handlerClass.getConstructor(String.class);
 			handler = (IHandler) handleConstructor.newInstance(newspaperName);
@@ -117,9 +113,10 @@ public class DefaultWatcher implements IWatcher {
 			// 无限执行，除非打断
 			while (true) {
 				// 产生监控的URL
-				String dateFormat = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.format_date);
-				String nodeFormat = ncm.getUrlConfig(newspaperName, NewspaperConfigManager.UrlConfig.format_node);
-				String startUrlStr = fillDate(nodeFormat, dateFormat, new Date());
+				Date date = new Date();
+				String dateFormat = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_date);
+				String nodeFormat = ncm.getUrlConfig(newspaperName, date,NewspaperConfigManager.UrlConfig.format_node);
+				String startUrlStr = fillDate(nodeFormat, dateFormat, date);
 				URL url;
 				try {
 					url = new URL(startUrlStr);
@@ -129,6 +126,7 @@ public class DefaultWatcher implements IWatcher {
 				}
 
 				try {
+					handler.setDate(date);
 					handler.setStartUrl(url);
 					handler.handle();
 				} catch (Exception e1) {
