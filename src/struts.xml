@@ -4,8 +4,10 @@
 	"http://struts.apache.org/dtds/struts-2.3.dtd">
 
 <struts>
+	<!-- 改完马上有反馈 -->
     <constant name="struts.devMode" value="true" />
     <package name="default" namespace="/" extends="struts-default">
+        <!--
         <default-action-ref name="index" />
         <global-results>
             <result name="error">/WEB-INF/jsp/error.jsp</result>
@@ -14,10 +16,11 @@
         <global-exception-mappings>
             <exception-mapping exception="java.lang.Exception" result="error"/>
         </global-exception-mappings>
-
+		-->
+        	
         <action name="hello" class="helloAction">
-		<result name="success">/jsp/hello.jsp</result>
-	</action>
+			<result name="success">/jsp/hello.jsp</result>
+		</action>
     </package>
 
     <!-- Add packages here -->
