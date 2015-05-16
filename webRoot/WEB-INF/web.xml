@@ -7,17 +7,29 @@
 	
 	<display-name></display-name>
 	
-	<servlet>
-		<description>HelloWorld</description>
-		<display-name>HelloWorld</display-name>
-		<servlet-name>HelloWorldServlet</servlet-name>
-		<servlet-class>cn.edu.nju.winews.server.HelloWorldServlet</servlet-class>
-	</servlet>
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath*:spring/applicationContext*.xml</param-value>
+	</context-param>
 	
-	<servlet-mapping>
-		<servlet-name>HelloWorldServlet</servlet-name>
-		<url-pattern>/HelloWorld</url-pattern>
-	</servlet-mapping>
+	
+	<filter>
+		<filter-name>struts2</filter-name>
+		<filter-class>org.apache.struts2.dispatcher.ng.filter.StrutsPrepareAndExecuteFilter</filter-class>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>struts2</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	
+	
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	<listener>
+		<listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
+	</listener>
 	
 	<welcome-file-list>
 		<welcome-file>index.jsp</welcome-file>
