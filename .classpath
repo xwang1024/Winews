@@ -58,5 +58,6 @@
 	<classpathentry kind="lib" path="/home/xin/javaLib/struts-2.3.24/apps/struts2-portlet-lib/asm-3.3.jar"/>
 	<classpathentry kind="lib" path="/home/xin/javaLib/struts-2.3.24/apps/struts2-portlet-lib/aopalliance-1.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/hibernate"/>
+	<classpathentry kind="lib" path="/home/xin/javaLib/struts-2.3.24/lib/struts2-json-plugin-2.3.24.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

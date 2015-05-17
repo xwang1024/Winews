@@ -4,93 +4,136 @@ import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Map;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import cn.edu.nju.winews.config.NewspaperConfigManager;
 
-public class DefaultWatcher implements IWatcher {
-	private static final Logger log = Logger.getLogger(DefaultWatcher.class.getName());
+public class DefaultWatcher {
+	public static final String MODE_TODAY = "today";
+	public static final String MODE_GO_PAST = "toPast";
+	public static final GregorianCalendar EDGE_CALENDAR = new GregorianCalendar(2015, 0, 1);
+	private static final Logger logger = Logger.getLogger(DefaultWatcher.class.getName());
+	private String mode = MODE_TODAY;
+	private Thread timer = null;
 	private String name;
-	private Thread t;
 	private Status status;
+	private Date startDate;
 
 	public DefaultWatcher(String name) throws Exception {
 		this.name = name;
 		this.status = Status.close;
-		t = new Thread(new WatchThread(name));
 	}
 
-	@Override
+	public Date today() {
+		int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+		Date date;
+		if (hour > 5) {
+			date = new Date();
+		} else {
+			GregorianCalendar calendar = new GregorianCalendar();
+			calendar.add(Calendar.DAY_OF_MONTH, -1);
+			date = calendar.getTime();
+		}
+		return date;
+	}
+
 	public void start() throws Exception {
-		if (status != Status.run && status != Status.restart) {
-			log.log(Level.INFO, "Watcher {0} is starting...", name);
+		if (status != Status.run) {
 			status = Status.run;
-			t.start();
-		} else {
-			log.log(Level.INFO, "Watcher {0} is busy...", name);
-		}
-	}
+			if (mode.equals(MODE_TODAY)) {
+				timer = new Thread(new TimerTask() {
+					int errorTime = 0;
 
-	@Override
-	public void close() throws Exception {
-		if (status == Status.run) {
-			log.log(Level.INFO, "Watcher {0} is closing...", name);
-			status = Status.close;
-			if (t.isAlive()) {
-				t.interrupt();
+					@Override
+					public void run() {
+						logger.log(Level.INFO, "Today {0} thread start...", name);
+						while (true) {
+							try {
+								// logger.log(Level.INFO,
+								// "Watcher {0} is added to task pool...",
+								// name);
+								CrawlerPool.getInstance().addTask(new WatchThread(name, today()));
+							} catch (Exception e) {
+								if (errorTime > 3) {
+									timer.interrupt();
+								}
+							}
+							try {
+								Thread.sleep(600000);
+							} catch (InterruptedException e) {
+								logger.log(Level.INFO, "Today {0} thread interrupted...", name);
+							}
+						}
+					}
+				});
+				timer.start();
+			} else if (mode.equals(MODE_GO_PAST)) {
+				final GregorianCalendar calendar = new GregorianCalendar();
+				calendar.setTime(startDate);
+				timer = new Thread(new TimerTask() {
+					int errorTime = 0;
+
+					@Override
+					public void run() {
+						logger.log(Level.INFO, "Past {0} thread start...", name);
+						while (true) {
+							try {
+								// logger.log(Level.INFO,
+								// "Watcher {0} is added to task pool...",
+								// name);
+								CrawlerPool.getInstance().addLongTask(new WatchThread(name, calendar.getTime()));
+								calendar.add(GregorianCalendar.DAY_OF_MONTH, -1);
+							} catch (Exception e) {
+								e.printStackTrace();
+								if (errorTime > 3) {
+									errorTime = 0;
+									calendar.add(GregorianCalendar.DAY_OF_MONTH, -1);
+								}
+								errorTime++;
+							}
+							try {
+								Thread.sleep(5000);
+							} catch (InterruptedException e) {
+								logger.log(Level.INFO, "Past {0} thread interrupted...", name);
+							}
+						}
+					}
+				});
+				timer.start();
 			} else {
-				log.log(Level.INFO, "Watcher {0} was already dead...", name);
+				logger.log(Level.WARNING, "Unknown Mode.");
 			}
 		} else {
-			log.log(Level.INFO, "Watcher {0} is busy or not running...", name);
+			logger.log(Level.WARNING, "Watcher {0} is busy...", name);
 		}
-	}
-
-	@Override
-	public void restart() throws Exception {
-		if (status == Status.run) {
-			log.log(Level.INFO, "Watcher {0} is restarting...", name);
-			status = Status.restart;
-			if (t.isAlive()) {
-				t.interrupt();
-			} else {
-				log.log(Level.INFO, "Watcher {0} was already dead...", name);
-			}
-			status = Status.run;
-			t.start();
-		} else {
-			log.log(Level.INFO, "Watcher {0} is busy or not running...", name);
-		}
-	}
-
-	@Override
-	public void status() throws Exception {
-		log.log(Level.INFO, "Watcher {0}: {1}", new String[] { name, status.toString() });
 	}
 
 	private enum Status {
-		close, pause, run, restart
+		close, run
 	}
 
 	/**
-	 * 一个线程只监控一个报刊网站
+	 * 使用线程池控制
 	 * 
 	 * @author Xin Wang
 	 *
 	 */
 	private class WatchThread implements Runnable {
+		private final Logger logger = Logger.getLogger(WatchThread.class.getName());
 		private String newspaperName;
-
-		private static final int interval = 60000;
-
 		private final NewspaperConfigManager ncm;
-
 		private IHandler handler;
+		private Date date;
 
-		public WatchThread(String newspaperName) throws Exception {
+		public WatchThread(String newspaperName, Date date) throws Exception {
 			this.newspaperName = newspaperName;
+			this.date = date;
 			ncm = NewspaperConfigManager.getInstance();
 			updateConfig();
 		}
@@ -110,39 +153,48 @@ public class DefaultWatcher implements IWatcher {
 		}
 
 		public void run() {
-			// 无限执行，除非打断
-			while (true) {
-				// 产生监控的URL
-				Date date = new Date();
-				String dateFormat = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_date);
-				String nodeFormat = ncm.getUrlConfig(newspaperName, date,NewspaperConfigManager.UrlConfig.format_node);
-				String startUrlStr = fillDate(nodeFormat, dateFormat, date);
-				URL url;
-				try {
-					url = new URL(startUrlStr);
-				} catch (Exception e) {
-					log.log(Level.SEVERE, "Root Url Error: {0}", startUrlStr);
-					break;
-				}
+			// 产生监控的URL
+			logger.log(Level.INFO, "Task start: {0} - {1}", new Object[] { newspaperName, date });
+			if (date == null) {
+				date = new Date();
+			}
+			String dateFormat = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_date);
+			String nodeFormat = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_node);
+			String startUrlStr = fillDate(nodeFormat, dateFormat, date);
+			URL url = null;
+			try {
+				url = new URL(startUrlStr);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Root Url Error: {0}", startUrlStr);
+			}
 
-				try {
-					handler.setDate(date);
-					handler.setStartUrl(url);
-					handler.handle();
-				} catch (Exception e1) {
-					log.log(Level.SEVERE, "Handler Error: {0}", e1.getMessage());
-					e1.printStackTrace();
-					status = Status.close;
-					break;
-				}
+			try {
+				handler.setDate(date);
+				handler.setStartUrl(url);
+				handler.handle();
+			} catch (Exception e1) {
+				logger.log(Level.SEVERE, "Handler Error: {0}", e1.getMessage());
+				e1.printStackTrace();
+				status = Status.close;
+			}
+			logger.log(Level.INFO, "Task end: {0} - {1}", new Object[] { newspaperName, date });
+		}
+	}
 
-				try {
-					Thread.sleep(interval);
-				} catch (InterruptedException e) {
-					log.log(Level.INFO, "Thread {0} was interrupted...", newspaperName);
-					status = Status.close;
-					break;
-				}
+	public void setConfig(Map<String, String> conf) throws Exception {
+		if (conf.containsKey("startDate")) {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			startDate = sdf.parse(conf.get("startDate"));
+		}
+		if (conf.containsKey("mode")) {
+			String _mode = conf.get("mode");
+			switch (_mode) {
+			case MODE_TODAY:
+			case MODE_GO_PAST:
+				mode = _mode;
+				break;
+			default:
+				logger.log(Level.WARNING, "Unknown Mode.");
 			}
 		}
 	}

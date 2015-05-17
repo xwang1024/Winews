@@ -137,6 +137,10 @@ public class NewspaperConfigManager {
 		if (conf == null)
 			return null;
 		else {
+			Config configDetail = conf.getConfig(URL_CONFIG_PREFIX + configName.toString());
+			if(configDetail == null) {
+				return null;
+			}
 			String result = conf.getConfig(URL_CONFIG_PREFIX + configName.toString()).getValue(date);
 			if (result == null) {
 				result = DEFAULT_NULL;
@@ -177,7 +181,7 @@ public class NewspaperConfigManager {
 	}
 
 	public static enum UrlConfig {
-		pattern_node, pattern_content, pattern_date, format_node, format_date
+		pattern_node, pattern_content, pattern_date, format_node, format_date, content_charset
 	}
 
 	public static enum Selector {

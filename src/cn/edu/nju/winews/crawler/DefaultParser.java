@@ -18,11 +18,9 @@ import cn.edu.nju.winews.model.News;
 import cn.edu.nju.winews.model.NewsPicture;
 
 public class DefaultParser implements IParser {
-	private static final Logger log = Logger.getLogger(DefaultParser.class.getName());
+	private static final Logger logger = Logger.getLogger(DefaultParser.class.getName());
 
 	private String newspaperName;
-
-	private int timeoutMillis;
 	private Date date;
 
 	private String selector_preTitle;
@@ -59,12 +57,16 @@ public class DefaultParser implements IParser {
 			String condition = sp[1];
 			if (condition.toLowerCase().contains("nth-child")) {
 				int index = Integer.parseInt(condition.split("\\(")[1].replace(')', ' ').trim()) - 1;
-				s = doc.select(mainSelector).get(index).text();
+				try {
+					s = doc.select(mainSelector).get(index).text();
+				} catch (Exception e) {
+					logger.log(Level.WARNING, "{0} - Selector error: {1}", new Object[] { newspaperName, e.getMessage() });
+				}
 			} else if (condition.toLowerCase().contains("not")) {
 				s = doc.select(selector).text();
 			} else {
 				s = "";
-				log.log(Level.INFO, "Unimplemented condition: {0}", condition);
+				logger.log(Level.WARNING, "Unimplemented condition: {0}", condition);
 			}
 		} else {
 			s = doc.select(selector).text();
@@ -73,9 +75,8 @@ public class DefaultParser implements IParser {
 		return s;
 	}
 
-	public Serializable parse(URL url) throws Exception {
-		Document doc = Jsoup.connect(url.toString()).ignoreContentType(true).ignoreHttpErrors(true).timeout(timeoutMillis)
-				.userAgent("Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0").get();
+	public Serializable parse(Document doc) throws Exception {
+		URL url = new URL(doc.baseUri());
 		News news = new News();
 		news.setUrl(url.toString());
 		news.setNewspaper(newspaperName);
@@ -84,7 +85,7 @@ public class DefaultParser implements IParser {
 		news.setTitle(select(doc, selector_title));
 		news.setSubTitle(select(doc, selector_subTitle));
 		news.setAuthor(select(doc, selector_author));
-		news.setLayout(select(doc, selector_layout).replace(":", "：").replace("●", "："));
+		news.setLayout(select(doc, selector_layout).replace("上一版", "").replace("下一版", "").replace(":", "：").replace("●", "："));
 		StringBuilder sb = new StringBuilder();
 		for (Element e : doc.select(selector_content)) {
 			if (!e.getElementsByTag("br").isEmpty()) {
@@ -140,7 +141,7 @@ public class DefaultParser implements IParser {
 				try {
 					pic.setUrl(new URL(picAbsUrl).toString());
 				} catch (MalformedURLException e1) {
-					log.log(Level.INFO, "Newspaper: {0}, URL Create Error: {1}", new String[] { newspaperName, e1.getMessage() });
+					logger.log(Level.WARNING, "Newspaper: {0}, URL Create Error: {1}", new String[] { newspaperName, e1.getMessage() });
 					continue;
 				}
 			}
@@ -151,22 +152,25 @@ public class DefaultParser implements IParser {
 			if (pic.getComment().equals("")) {
 				pic.setComment(e.getElementsByAttribute("title").attr("title"));
 			}
-			log.log(Level.INFO, "Newspaper: {0}, Picture URL: {1}, Comment: {2}", new String[] { newspaperName, pic.getUrl(), pic.getComment() });
+			// logger.log(Level.FINE,
+			// "Newspaper: {0}, Picture URL: {1}, Comment: {2}", new String[] {
+			// newspaperName, pic.getUrl(), pic.getComment() });
 			picList.add(pic);
 		}
 		news.setPictures(picList.toArray(new NewsPicture[picList.size()]));
 		return news;
 	}
 
-	public static void main(String[] args) throws Exception {
-		DefaultParser p;
-		Serializable news;
-		try {
-			p = new DefaultParser("云南日报", new Date());
-			news = p.parse(new URL("http://yndaily.yunnan.cn/html/2015-05/14/content_964520.htm"));
-			System.out.println(news);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-	}
+	// public static void main(String[] args) throws Exception {
+	// DefaultParser p;
+	// Serializable news;
+	// try {
+	// p = new DefaultParser("云南日报", new Date());
+	// news = p.parse(new
+	// URL("http://yndaily.yunnan.cn/html/2015-05/14/content_964520.htm"));
+	// System.out.println(news);
+	// } catch (MalformedURLException e) {
+	// e.printStackTrace();
+	// }
+	// }
 }

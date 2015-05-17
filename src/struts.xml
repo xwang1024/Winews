@@ -5,24 +5,26 @@
 
 <struts>
 	<!-- 改完马上有反馈 -->
-    <constant name="struts.devMode" value="true" />
-    <package name="default" namespace="/" extends="struts-default">
-        <!--
-        <default-action-ref name="index" />
-        <global-results>
-            <result name="error">/WEB-INF/jsp/error.jsp</result>
-        </global-results>
-
-        <global-exception-mappings>
-            <exception-mapping exception="java.lang.Exception" result="error"/>
-        </global-exception-mappings>
-		-->
-        	
-        <action name="hello" class="helloAction">
-			<result name="success">/jsp/hello.jsp</result>
+	<constant name="struts.devMode" value="true" />
+	<package name="default" namespace="/" extends="json-default">
+		<!-- <default-action-ref name="index" /> <global-results> <result name="error">/WEB-INF/jsp/error.jsp</result>
+			</global-results> <global-exception-mappings> <exception-mapping exception="java.lang.Exception"
+			result="error"/> </global-exception-mappings> -->
+		
+		<action name="search" class="cn.edu.nju.winews.server.action.SearchAction" method="search">
+			<result type="json">
+				<param name="root">dataMap</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
 		</action>
-    </package>
-
-    <!-- Add packages here -->
-
+		<action name="getNews" class="cn.edu.nju.winews.server.action.NewsAction" method="get">
+			<result type="json">
+				<param name="root">dataMap</param>
+				<param name="excludeNullProperties">true</param>
+			</result>
+		</action>
+	</package>
+	
+	<!-- Add packages here -->
+	
 </struts>

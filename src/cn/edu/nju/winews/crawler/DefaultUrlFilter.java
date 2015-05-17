@@ -19,6 +19,10 @@ public class DefaultUrlFilter {
 		}
 		for (Element element : elements) {
 			String u = element.attr("href");
+			if(u.toLowerCase().contains("javascript")) {
+				u = element.attr("url");
+				u = u.replaceAll("^\\./", "");
+			}
 			if (isEligible(u)) {
 				URL url = null;
 				try {

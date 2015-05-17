@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
@@ -25,8 +24,8 @@ import cn.edu.nju.winews.model.News;
 import cn.edu.nju.winews.model.VisitedRecord;
 
 public class DefaultHandler implements IHandler {
-	private static final Logger log = Logger.getLogger(DefaultHandler.class.getName());
-	private static final int timeoutMillis = 5000;
+	private static final Logger logger = Logger.getLogger(DefaultHandler.class.getName());
+
 	private static final int maxDepth = 5;
 
 	private VisitedDao vistiedDao;
@@ -42,12 +41,13 @@ public class DefaultHandler implements IHandler {
 	private String pattern_content;
 	private String pattern_date;
 	private String format_date;
+	private String content_charset;
 
 	private Date date;
 
 	public DefaultHandler(String newspaperName) {
 		this.newspaperName = newspaperName;
-		
+
 		try {
 			vistiedDao = new VisitedDaoImpl();
 			newsDao = new NewsDaoImpl();
@@ -55,6 +55,7 @@ public class DefaultHandler implements IHandler {
 			e.printStackTrace();
 		}
 	}
+
 	public void setDate(Date date) {
 		this.date = date;
 	}
@@ -62,7 +63,6 @@ public class DefaultHandler implements IHandler {
 	public void setStartUrl(URL startUrl) {
 		this.startUrl = startUrl;
 	}
-	
 
 	public void setVisitedDao(VisitedDao visitedDao) {
 		this.vistiedDao = visitedDao;
@@ -76,12 +76,12 @@ public class DefaultHandler implements IHandler {
 	public void handle() throws Exception {
 		// 检查起始URL是否为空
 		if (startUrl == null) {
-			log.log(Level.INFO, "Handler {0}: URL is null!",newspaperName);
+			logger.log(Level.WARNING, "Handler {0}: URL is null!", newspaperName);
 			return;
 		}
 		// 检查起始URL是否被爬取
 		if (vistiedDao.isVisited(startUrl.toString())) {
-			log.log(Level.INFO, "Handler {0}: URL {1} has been visited!",new String[]{newspaperName,startUrl.toString()});
+			logger.log(Level.INFO, "Handler {0}: URL {1} has been visited!", new String[] { newspaperName, startUrl.toString() });
 			return;
 		}
 		// 初始化配置
@@ -98,12 +98,13 @@ public class DefaultHandler implements IHandler {
 		pattern_content = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.pattern_content);
 		pattern_date = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.pattern_date);
 		format_date = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_date);
+		content_charset = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.content_charset);
 		// 此处必须重置时间
 		date = getDateFromLink(startUrl.toString());
-		
+
 		String parserName = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.parser);
-		Constructor<?> constructor = Class.forName(parserName).getConstructor(String.class,Date.class);
-		parser = (IParser) constructor.newInstance(newspaperName,date);
+		Constructor<?> constructor = Class.forName(parserName).getConstructor(String.class, Date.class);
+		parser = (IParser) constructor.newInstance(newspaperName, date);
 
 	}
 
@@ -126,8 +127,11 @@ public class DefaultHandler implements IHandler {
 		}
 		Document doc;
 		try {
-			doc = Jsoup.connect(url.toString()).ignoreContentType(true).ignoreHttpErrors(true).timeout(timeoutMillis)
-					.userAgent("Mozilla/5.0 (Windows NT 6.1; rv:22.0) Gecko/20100101 Firefox/22.0").get();
+			if (content_charset == null) {
+				doc = SourceHelper.get(url.toString());
+			} else {
+				doc = SourceHelper.get(url.toString(), content_charset);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
@@ -151,7 +155,7 @@ public class DefaultHandler implements IHandler {
 					vistiedDao.add(record); // 链接加入链接列表
 					// 如果是节点链接
 					if (Pattern.matches(pattern_node, link.toString())) {
-						log.log(Level.INFO, "Newspaper: {0}, Node URL: {1}", new String[] { newspaperName, link.toString() });
+//						System.err.println(newspaperName + "\t  Node URL: " + link);
 						try {
 							getLinks(link, depth++);
 						} catch (Exception e) {
@@ -160,21 +164,39 @@ public class DefaultHandler implements IHandler {
 						}
 						// 如果是正文链接
 					} else if (Pattern.matches(pattern_content, link.toString())) {
-						log.log(Level.INFO, "Newspaper: {0}, Content URL: {1}", new String[] { newspaperName, link.toString() });
+//						System.err.println(newspaperName + "\t  Content URL: " + link);
 						News news = null;
 						try {
-							news = (News) parser.parse(link);
+							Document contentDoc;
+							if (content_charset == null) {
+								contentDoc = SourceHelper.get(link.toString());
+							} else {
+								contentDoc = SourceHelper.get(link.toString(), content_charset);
+							}
+							news = (News) parser.parse(contentDoc);
 							news.setDate(date);
 							news.setDomain(domain);
 							news.setProvince(province);
-//							if (news.getLayout().equals("")) {
-//								news.setLayout(doc.select("#banzhibar>div").first().text().trim());
-//							}
+							// if (news.getLayout().equals("")) {
+							// news.setLayout(doc.select("#banzhibar>div").first().text().trim());
+							// }
 						} catch (Exception e) {
 							e.printStackTrace();
 							continue;
 						}
-						newsDao.add(news);
+						if (news != null) {
+							KeywordProcessor.getInstance().addNewsTask(news);
+							try {
+								newsDao.add(news);
+							} catch (Exception e) {
+								if (e.getMessage().contains("duplicate key")) {
+									logger.log(Level.INFO, "This news has been added, url: {0}", news.getUrl());
+									continue;
+								} else {
+									e.printStackTrace();
+								}
+							}
+						}
 					}
 				}
 			}

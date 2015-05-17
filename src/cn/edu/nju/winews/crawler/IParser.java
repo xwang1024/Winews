@@ -1,8 +1,9 @@
 package cn.edu.nju.winews.crawler;
 
 import java.io.Serializable;
-import java.net.URL;
+
+import org.jsoup.nodes.Document;
 
 public interface IParser {
-	public Serializable parse(URL url) throws Exception;
+	public Serializable parse(Document doc) throws Exception;
 }
