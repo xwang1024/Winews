@@ -5,6 +5,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -15,6 +16,7 @@ public class DefaultWatcher implements IWatcher {
 	private String name;
 	private Thread t;
 	private Status status;
+	private Date startDate;
 
 	public DefaultWatcher(String name) throws Exception {
 		this.name = name;
@@ -113,10 +115,12 @@ public class DefaultWatcher implements IWatcher {
 			// 无限执行，除非打断
 			while (true) {
 				// 产生监控的URL
-				Date date = new Date();
-				String dateFormat = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_date);
-				String nodeFormat = ncm.getUrlConfig(newspaperName, date,NewspaperConfigManager.UrlConfig.format_node);
-				String startUrlStr = fillDate(nodeFormat, dateFormat, date);
+				if(startDate == null) {
+					startDate = new Date();
+				}
+				String dateFormat = ncm.getUrlConfig(newspaperName, startDate, NewspaperConfigManager.UrlConfig.format_date);
+				String nodeFormat = ncm.getUrlConfig(newspaperName, startDate,NewspaperConfigManager.UrlConfig.format_node);
+				String startUrlStr = fillDate(nodeFormat, dateFormat, startDate);
 				URL url;
 				try {
 					url = new URL(startUrlStr);
@@ -126,7 +130,7 @@ public class DefaultWatcher implements IWatcher {
 				}
 
 				try {
-					handler.setDate(date);
+					handler.setDate(startDate);
 					handler.setStartUrl(url);
 					handler.handle();
 				} catch (Exception e1) {
@@ -144,6 +148,16 @@ public class DefaultWatcher implements IWatcher {
 					break;
 				}
 			}
+		}
+	}
+
+	@Override
+	public void setConfig(Map<String, String> conf) throws Exception {
+		if(conf.containsKey("startDate")) {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			startDate = sdf.parse(conf.get("startDate"));
+		} else {
+			log.log(Level.INFO, "Unimplemented config");
 		}
 	}
 }

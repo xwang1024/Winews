@@ -47,7 +47,7 @@ public class DefaultHandler implements IHandler {
 
 	public DefaultHandler(String newspaperName) {
 		this.newspaperName = newspaperName;
-		
+
 		try {
 			vistiedDao = new VisitedDaoImpl();
 			newsDao = new NewsDaoImpl();
@@ -55,6 +55,7 @@ public class DefaultHandler implements IHandler {
 			e.printStackTrace();
 		}
 	}
+
 	public void setDate(Date date) {
 		this.date = date;
 	}
@@ -62,7 +63,6 @@ public class DefaultHandler implements IHandler {
 	public void setStartUrl(URL startUrl) {
 		this.startUrl = startUrl;
 	}
-	
 
 	public void setVisitedDao(VisitedDao visitedDao) {
 		this.vistiedDao = visitedDao;
@@ -76,12 +76,12 @@ public class DefaultHandler implements IHandler {
 	public void handle() throws Exception {
 		// 检查起始URL是否为空
 		if (startUrl == null) {
-			log.log(Level.INFO, "Handler {0}: URL is null!",newspaperName);
+			log.log(Level.INFO, "Handler {0}: URL is null!", newspaperName);
 			return;
 		}
 		// 检查起始URL是否被爬取
 		if (vistiedDao.isVisited(startUrl.toString())) {
-			log.log(Level.INFO, "Handler {0}: URL {1} has been visited!",new String[]{newspaperName,startUrl.toString()});
+			log.log(Level.INFO, "Handler {0}: URL {1} has been visited!", new String[] { newspaperName, startUrl.toString() });
 			return;
 		}
 		// 初始化配置
@@ -100,10 +100,10 @@ public class DefaultHandler implements IHandler {
 		format_date = ncm.getUrlConfig(newspaperName, date, NewspaperConfigManager.UrlConfig.format_date);
 		// 此处必须重置时间
 		date = getDateFromLink(startUrl.toString());
-		
+
 		String parserName = ncm.getCommonConfig(newspaperName, NewspaperConfigManager.CommonConfig.parser);
-		Constructor<?> constructor = Class.forName(parserName).getConstructor(String.class,Date.class);
-		parser = (IParser) constructor.newInstance(newspaperName,date);
+		Constructor<?> constructor = Class.forName(parserName).getConstructor(String.class, Date.class);
+		parser = (IParser) constructor.newInstance(newspaperName, date);
 
 	}
 
@@ -167,14 +167,17 @@ public class DefaultHandler implements IHandler {
 							news.setDate(date);
 							news.setDomain(domain);
 							news.setProvince(province);
-//							if (news.getLayout().equals("")) {
-//								news.setLayout(doc.select("#banzhibar>div").first().text().trim());
-//							}
+							// if (news.getLayout().equals("")) {
+							// news.setLayout(doc.select("#banzhibar>div").first().text().trim());
+							// }
 						} catch (Exception e) {
 							e.printStackTrace();
 							continue;
 						}
-						newsDao.add(news);
+						if (news != null) {
+							KeywordProcessor.getInstance().addNewsTask(news);
+							newsDao.add(news);
+						}
 					}
 				}
 			}

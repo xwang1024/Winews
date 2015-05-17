@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import cn.edu.nju.winews.dao.NewsDao;
-import cn.edu.nju.winews.model.BriefNews;
 import cn.edu.nju.winews.model.News;
 import cn.edu.nju.winews.model.NewsPicture;
 
@@ -46,12 +45,10 @@ public class NewsDaoImpl implements NewsDao {
 		DBCollection coll = db.getCollection(tableName);
 		BasicDBObject dbObj = new BasicDBObject("url", url);
 		DBObject result = coll.findOne(dbObj);
+		if(result == null) {
+			return null;
+		}
 		return WiConvertor.DBObject2News(result);
-	}
-
-	@Override
-	public BriefNews[] search(String[] keywords) throws Exception {
-		return null;
 	}
 
 }
@@ -60,7 +57,7 @@ class WiConvertor {
 	public static News DBObject2News(DBObject o) {
 		News news = new News();
 		news.setUrl(o.get("url").toString());
-		news.setDomain(o.get("domail").toString());
+		news.setDomain(o.get("domain").toString());
 		news.setNewspaper(o.get("newspaper").toString());
 		news.setPreTitle(o.get("preTitle").toString());
 		news.setTitle(o.get("title").toString());
