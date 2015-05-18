@@ -3,7 +3,7 @@ package cn.edu.nju.winews.server;
 import cn.edu.nju.winews.NewsWatcherManager;
 
 public class ServerStarter {
-	
+
 	public static void main(String[] args) throws Exception {
 		new Thread(new Runnable() {
 			@Override
@@ -16,7 +16,7 @@ public class ServerStarter {
 				}
 			}
 		}).start();
-		
+
 		WinewsServer server = new WinewsServer("jetty/etc/jetty.xml", "/winews");
 		server.startServer();
 	}
