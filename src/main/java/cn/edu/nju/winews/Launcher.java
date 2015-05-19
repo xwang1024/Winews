@@ -4,7 +4,7 @@ package cn.edu.nju.winews;
  * Hello world!
  *
  */
-public class App 
+public class Launcher 
 {
     public static void main( String[] args )
     {
