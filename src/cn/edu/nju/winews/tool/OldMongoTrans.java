@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
 
 import cn.edu.nju.winews.config.NewspaperConfigManager;
 import cn.edu.nju.winews.crawler.KeywordProcessor;

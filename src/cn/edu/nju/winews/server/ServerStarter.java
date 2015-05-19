@@ -17,7 +17,7 @@ public class ServerStarter {
 			}
 		}).start();
 
-		WinewsServer server = new WinewsServer("jetty/etc/jetty.xml", "/winews");
+		WinewsServer server = new WinewsServer();
 		server.startServer();
 	}
 }

@@ -1,9 +1,8 @@
 package cn.edu.nju.winews.server;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.net.URLDecoder;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -12,47 +11,37 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import net.sf.json.JSONObject;
-import cn.edu.nju.winews.dao.KeywordDao;
 import cn.edu.nju.winews.dao.NewsDao;
-import cn.edu.nju.winews.dao.impl.KeywordDaoImpl;
 import cn.edu.nju.winews.dao.impl.NewsDaoImpl;
-import cn.edu.nju.winews.dto.BriefNewsDTO;
+import cn.edu.nju.winews.model.News;
+import cn.edu.nju.winews.util.Base64Util;
 
-public class SearchServlet extends HttpServlet {
+public class GetNewsServlet extends HttpServlet {
 
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 7972723407870315568L;
-
+	private static final long serialVersionUID = 3855953739440921274L;
 	private Map<String, Object> dataMap;
-
-	private KeywordDao kwd;
 	private NewsDao nd;
 
-	public SearchServlet() throws Exception {
+	public GetNewsServlet() throws Exception {
 		dataMap = new HashMap<String, Object>();
-		kwd = new KeywordDaoImpl();
 		nd = new NewsDaoImpl();
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		dataMap.clear();
-		String keywords = req.getParameter("keywords");
+		String id = req.getParameter("id");
 		try {
-			if (keywords == null) {
+			if (id == null) {
 				dataMap.put("status", "ERROR");
 			} else {
-				String[] keys = keywords.split(",");
-				String[] urls = kwd.search(keys);
-				List<BriefNewsDTO> results = new ArrayList<BriefNewsDTO>();
-				for (int i = 0; i < urls.length; i++) {
-					BriefNewsDTO news = new BriefNewsDTO(nd.get(urls[i]));
-					results.add(news);
+				String url = URLDecoder.decode(new String(Base64Util.decode(id.getBytes())), "utf-8");
+				System.out.println(url);
+				News news;
+				news = nd.get(url);
+				if (news != null) {
+					dataMap.put("news", news);
 				}
-				dataMap.put("keywords", keys);
-				dataMap.put("results", results);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -65,4 +54,5 @@ public class SearchServlet extends HttpServlet {
 		resp.getWriter().println(json.toString());
 		resp.getWriter().close();
 	}
+
 }
