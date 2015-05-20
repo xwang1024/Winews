@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<conf name="winews">
+	<conf name="global">
+		<conf name="defaultParser" value=""/>
+	</conf>
+	<conf name="dataSource">
+		<conf name="newspaper">
+			<conf name="云南日报">
+				<conf name="domain" value="yndaily.yunnan.cn" />
+				<conf name="province" value="云南" />
+				<conf name="url">
+					<conf name="nodePattern" value="http://yndaily.yunnan.cn/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/node_[0-9]*.htm"/>
+					<conf name="contentPattern" value="http://yndaily.yunnan.cn/html/[0-9]{4}-[0-9]{2}/[0-9]{2}/content_[0-9]*.htm"/>
+				</conf>
+				<conf name="date">
+					<conf name="pattern" value="[0-9]{4}-[0-9]{2}/[0-9]{2}"></conf>
+					<conf name="format" value="yyyy-MM/dd"></conf>
+				</conf>
+				<conf name="selector" end="2014-01-01">
+					<conf name="preTitle" value=".title2:nth-child(1)"></conf>
+					<conf name="title" value=".title1"></conf>
+					<conf name="subTitle" value=".title2:nth-child(2)"></conf>
+					<conf name="author" value=".title2:nth-child(3)"></conf>
+					<conf name="layout" value="123"></conf>
+					<conf name="content" value="#ozoom p"></conf>
+					<conf name="picture" value="table[bgcolor=#efefef] table"></conf>
+				</conf>
+				<conf name="selector" start="2014-01-02">
+					<conf name="preTitle" value=".title2:nth-child(1)"></conf>
+					<conf name="title" value=".title1"></conf>
+					<conf name="subTitle" value=".title2:nth-child(2)"></conf>
+					<conf name="author" value=".title2:nth-child(3)"></conf>
+					<conf name="layout" value="#layer61&gt;.fl"></conf>
+					<conf name="content" value="#ozoom p"></conf>
+					<conf name="picture" value="table[bgcolor=#efefef] table"></conf>
+				</conf>
+			</conf>
+		</conf>
+	</conf>
+</conf>

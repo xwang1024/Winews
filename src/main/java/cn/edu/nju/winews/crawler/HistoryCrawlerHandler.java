@@ -1,5 +1,7 @@
 package cn.edu.nju.winews.crawler;
 
+import cn.edu.nju.winews.crawler.config.Config;
+
 public class HistoryCrawlerHandler {
 
 	public HistoryCrawlerHandler(Config config) {
