@@ -2,6 +2,8 @@ package cn.edu.nju.winews.crawler.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -25,31 +27,41 @@ public class ConfigManager {
 
 	private static final Logger logger = LoggerFactory.getLogger(ConfigManager.class);
 
-	private static ConfigManager instance;
+	private static ConfigManager instance = new ConfigManager();
 
 	private Config config = new Config();
+	private ReentrantLock lock = new ReentrantLock();
 
 	private ConfigManager() {
 		// TODO Auto-generated constructor stub
 	}
 
 	public static ConfigManager getInstance() {
-		if (instance == null) {
-			instance = new ConfigManager();
-		}
 		return instance;
 	}
 
-	public static void setInstance(ConfigManager instance) {
-		ConfigManager.instance = instance;
-	}
-
 	public void init() throws ParserConfigurationException, SAXException, IOException {
+		lock.lock();
 		logger.info("Reading Configure: winews.xml");
-
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		SAXParser parser = factory.newSAXParser();
 		parser.parse(new File(CONFIG_NAME), new WinewsConfigHandler());
+		lock.unlock();
+	}
+
+	public void initT() throws ParserConfigurationException, SAXException, IOException {
+		lock.lock();
+		logger.info("Reading Configure: winews.xml");
+		SAXParserFactory factory = SAXParserFactory.newInstance();
+		SAXParser parser = factory.newSAXParser();
+		parser.parse(new File(CONFIG_NAME), new WinewsConfigHandler());
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		lock.unlock();
 	}
 
 	public void startWatchThread() throws FileSystemException {
@@ -71,21 +83,41 @@ public class ConfigManager {
 				init();
 			}
 		});
-		dfm.setRecursive(true);
 		dfm.addFile(fileObj);
 		dfm.setDelay(1000);
 		dfm.start();
 	}
 
 	public Config getConfig() {
+		if (!lock.isLocked()) {
+			return config;
+		}
+		try {
+			while (!lock.tryLock(1, TimeUnit.SECONDS));
+		} catch (InterruptedException e) {
+		}
+		lock.unlock();
 		return config;
 	}
 
-	public static void main(String[] args) throws InterruptedException, ParserConfigurationException, SAXException, IOException {
-		ConfigManager cm = new ConfigManager();
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
+		final ConfigManager cm = new ConfigManager();
 		cm.init();
-		cm.getConfig().print();
-		System.out.println(cm.getConfig().get("winews.dataSource.newspaper.云南日报.selector.layout@2050-01-01"));
+		cm.startWatchThread();
+		System.out.println(cm.getConfig().get("winews.dataSource.newspaper.云南日报.province"));
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (true) {
+					System.out.println(cm.getConfig().get("winews.dataSource.newspaper.云南日报.province"));
+					try {
+						Thread.sleep(50);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}).start();
 	}
 
 	private class WinewsConfigHandler extends DefaultHandler {

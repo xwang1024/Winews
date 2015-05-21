@@ -1,7 +1,14 @@
 package cn.edu.nju.winews;
 
+import java.io.IOException;
+
+import javax.xml.parsers.ParserConfigurationException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
+
+import cn.edu.nju.winews.crawler.CrawlerMain;
 
 /**
  * Hello world!
@@ -10,7 +17,8 @@ import org.slf4j.LoggerFactory;
 public class Launcher {
 	private static Logger logger = LoggerFactory.getLogger(Launcher.class);
 	
-	public static void main(String[] args) {
-		logger.info("Hello World! {} {} {}","占位符1","占位符2","占位符3");
+	public static void main(String[] args) throws ParserConfigurationException, SAXException, IOException {
+		CrawlerMain crawler = new CrawlerMain();
+		crawler.start();
 	}
 }

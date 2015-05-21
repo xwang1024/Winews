@@ -12,24 +12,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Config {
+	public static final SimpleDateFormat DEFAULT_SDF = new SimpleDateFormat("yyyy-MM-dd");
+
 	private static final Logger logger = LoggerFactory.getLogger(ConfigManager.class);
 
-	private static final String NODE_SP = "\\.";
-	private static final String DATE_SP = "@";
+	private static final String DATE_PREFIX = "@";
 	private static final Date MIN_DATE = new GregorianCalendar(1900, 0, 1).getTime();
 	private static final Date MAX_DATE = new GregorianCalendar(2100, 0, 1).getTime();
-	private static final SimpleDateFormat DEFAULT_SDF = new SimpleDateFormat("yyyy-MM-dd");
 
 	private ConfigNode root;
 
-	private ConfigNode searchNode(final String configPath) {
-		String path = new String(configPath);
+	private ConfigNode searchNode(final String[] configName) {
+		int len = configName.length;
 		Date date = null;
-		String[] sp = null;
-		if (path.contains(DATE_SP)) {
-			sp = path.split(DATE_SP);
-			path = sp[0];
-			String dateStr = sp[1];
+		if (configName[len - 1].startsWith(DATE_PREFIX)) {
+			len--;
+			String dateStr = configName[len].replace("@", "");
 			try {
 				date = DEFAULT_SDF.parse(dateStr);
 			} catch (ParseException e) {
@@ -37,10 +35,9 @@ public class Config {
 				e.printStackTrace();
 			}
 		}
-		sp = path.split(NODE_SP);
 		ConfigNode searchNode = root;
-		for (int i = 0; i < sp.length; i++) {
-			String name = sp[i];
+		for (int i = 0; i < len; i++) {
+			String name = configName[i];
 
 			searchNode = searchNode.getChild(name);
 			if (searchNode == null) {
@@ -84,16 +81,16 @@ public class Config {
 		return searchNode;
 	}
 
-	public String get(final String configPath) {
-		ConfigNode searchNode = searchNode(configPath);
+	public String get(final String... configName) {
+		ConfigNode searchNode = searchNode(configName);
 		if (searchNode == null) {
 			return null;
 		}
 		return searchNode.getValue();
 	}
 
-	public String[] getNameList(final String configPath) {
-		ConfigNode searchNode = searchNode(configPath);
+	public String[] getNameList(final String... configName) {
+		ConfigNode searchNode = searchNode(configName);
 		return searchNode.getChildrenNameList();
 	}
 
